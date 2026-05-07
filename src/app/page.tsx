@@ -178,8 +178,13 @@ export default function Home() {
 
       <TaskDetailModal
         task={selected}
+        opts={opts}
         onOpenChange={(v) => !v && setSelected(null)}
         onDeleted={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+        onSaved={(task) => {
+          setSelected(task);
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+        }}
       />
     </div>
   );
