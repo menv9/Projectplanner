@@ -1,9 +1,34 @@
 "use client";
-import type { Task } from "@/types";
+import { useState } from "react";
+import type { Status, Task } from "@/types";
 import { format } from "date-fns";
 
-export function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }) {
+export function TaskCard({ task, statuses, onClick, onUpdated }: {
+  task: Task;
+  statuses: Status[];
+  onClick?: () => void;
+  onUpdated?: () => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const [busy, setBusy] = useState(false);
   const due = task.dueDate ? new Date(task.dueDate) : null;
+
+  const changeStatus = async (statusId: string) => {
+    if (statusId === task.status.id) { setPicking(false); return; }
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ statusId })
+      });
+      if (r.ok) onUpdated?.();
+    } finally {
+      setBusy(false);
+      setPicking(false);
+    }
+  };
+
   return (
     <button
       onClick={onClick}
@@ -35,9 +60,32 @@ export function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }
 
         <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="status-pill" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
-              {task.status.name}
-            </span>
+            {picking ? (
+              <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {statuses.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="status-pill text-[9.5px] px-2 py-0.5"
+                    data-active={s.id === task.status.id}
+                    style={s.id !== task.status.id && s.color ? { color: s.color, borderColor: s.color } : {}}
+                    disabled={busy}
+                    onClick={() => changeStatus(s.id)}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="status-pill"
+                style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}
+                onClick={(e) => { e.stopPropagation(); setPicking(true); }}
+              >
+                {task.status.name}
+              </button>
+            )}
             {task.category && (
               <span className="chip">{task.category.name}</span>
             )}
@@ -52,8 +100,31 @@ export function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }
   );
 }
 
-export function TaskRow({ task, onClick }: { task: Task; onClick?: () => void }) {
+export function TaskRow({ task, statuses, onClick, onUpdated }: {
+  task: Task;
+  statuses: Status[];
+  onClick?: () => void;
+  onUpdated?: () => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const [busy, setBusy] = useState(false);
   const due = task.dueDate ? new Date(task.dueDate) : null;
+
+  const changeStatus = async (statusId: string) => {
+    if (statusId === task.status.id) { setPicking(false); return; }
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ statusId })
+      });
+      if (r.ok) onUpdated?.();
+    } finally {
+      setBusy(false);
+      setPicking(false);
+    }
+  };
 
   return (
     <button
@@ -64,9 +135,32 @@ export function TaskRow({ task, onClick }: { task: Task; onClick?: () => void })
       <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="status-pill" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
-              {task.status.name}
-            </span>
+            {picking ? (
+              <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                {statuses.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="status-pill text-[9.5px] px-2 py-0.5"
+                    data-active={s.id === task.status.id}
+                    style={s.id !== task.status.id && s.color ? { color: s.color, borderColor: s.color } : {}}
+                    disabled={busy}
+                    onClick={() => changeStatus(s.id)}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="status-pill"
+                style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}
+                onClick={(e) => { e.stopPropagation(); setPicking(true); }}
+              >
+                {task.status.name}
+              </button>
+            )}
             <span className="eyebrow inline-flex items-center gap-1.5">
               <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
               {task.priority.name}

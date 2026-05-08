@@ -1,6 +1,6 @@
 "use client";
 import type { Category, Filters, Priority, Status, User } from "@/types";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 type Opts = {
   priorities: Priority[]; statuses: Status[]; categories: Category[]; users: User[];
@@ -30,15 +30,18 @@ export function FilterBar({
         </div>
         <StatusPills value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
         <div className="flex flex-wrap items-end gap-2 mb-2">
-          <label className="min-w-[140px] flex-1">
+          <div className="min-w-[140px] flex-1">
             <span className="eyebrow block mb-1">Search</span>
-            <input
-              className="input"
-              placeholder="Title or notes…"
-              value={filters.q || ""}
-              onChange={(e) => set("q", e.target.value)}
-            />
-          </label>
+            <label className="relative block">
+              <Search size={14} className="absolute right-3 inset-y-0 my-auto text-dust pointer-events-none" />
+              <input
+                className="input pr-9"
+                placeholder="Title or notes…"
+                value={filters.q || ""}
+                onChange={(e) => set("q", e.target.value)}
+              />
+            </label>
+          </div>
           <Select label="Priority" value={filters.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
           <Select label="Category" value={filters.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} />
         </div>

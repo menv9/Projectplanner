@@ -186,7 +186,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {tasks.data.map((t, i) => (
                 <div key={t.id} className="rise-in" style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}>
-                  <TaskCard task={t} onClick={() => setSelected(t)} />
+                  <TaskCard task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
                 </div>
               ))}
             </div>
@@ -196,7 +196,7 @@ export default function Home() {
             <div className="space-y-2">
               {tasks.data.map((t, i) => (
                 <div key={t.id} className="rise-in" style={{ animationDelay: `${Math.min(i * 20, 180)}ms` }}>
-                  <TaskRow task={t} onClick={() => setSelected(t)} />
+                  <TaskRow task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
                 </div>
               ))}
             </div>
