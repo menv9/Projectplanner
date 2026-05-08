@@ -108,6 +108,20 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
   border-radius: 999px;
 }
 
+.status-pill {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-rule bg-ivory px-3 py-1 text-[10.5px] uppercase text-ash transition;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+}
+
+.status-pill:hover {
+  @apply border-ink text-ink;
+}
+
+.status-pill[data-active="true"] {
+  @apply bg-ink text-cream border-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.16)];
+}
+
 .dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; }
 
 .paper-card {

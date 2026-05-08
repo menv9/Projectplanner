@@ -154,7 +154,7 @@ export function TaskDetailModal({
             <Select label="Project" value={form.projectId} onChange={(v) => set("projectId", v)} options={opts.projects} />
             <Select label="Author" value={form.authorId} onChange={(v) => set("authorId", v)} options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
             <Select label="Priority" value={form.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
-            <Select label="Status" value={form.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
+            <StatusPills value={form.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
             <Select label="Category" value={form.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} emptyLabel="None" />
 
             <label className="block">
@@ -188,6 +188,37 @@ export function TaskDetailModal({
           </div>
         </footer>
       </section>
+    </div>
+  );
+}
+
+function StatusPills({
+  value, onChange, options
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Status[];
+}) {
+  return (
+    <div className="block min-w-0 sm:col-span-2">
+      <span className="eyebrow block mb-2">Status</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = option.id === value;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              className="status-pill"
+              data-active={active}
+              style={!active && option.color ? { color: option.color, borderColor: option.color } : {}}
+              onClick={() => onChange(option.id)}
+            >
+              {option.name}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

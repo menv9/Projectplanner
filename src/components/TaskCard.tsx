@@ -35,7 +35,7 @@ export function TaskCard({ task, onClick }: { task: Task; onClick?: () => void }
 
         <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="chip" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
+            <span className="status-pill" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
               {task.status.name}
             </span>
             {task.category && (
@@ -64,7 +64,7 @@ export function TaskRow({ task, onClick }: { task: Task; onClick?: () => void })
       <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="chip" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
+            <span className="status-pill" style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}>
               {task.status.name}
             </span>
             <span className="eyebrow inline-flex items-center gap-1.5">
