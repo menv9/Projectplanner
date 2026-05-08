@@ -12,11 +12,11 @@ const lowPriority = { name: "Low", rank: 1, color: "#6b7280" };
 const fallbackPriority = { name: "Unprioritized", rank: 0, color: "#9a9081" };
 
 const statusMap: Record<string, { name: string; rank: number; color: string }> = {
-  "No iniciada": { name: "No iniciada", rank: 1, color: "#6b7280" },
-  "En curso": { name: "En curso", rank: 2, color: "#3b82f6" },
-  Bloqueada: { name: "Bloqueada", rank: 3, color: "#c33518" },
-  "pensar mejor": { name: "Pensar mejor", rank: 4, color: "#5b2840" },
-  Completada: { name: "Completada", rank: 5, color: "#2f5a3a" }
+  "No iniciada": { name: "Todo", rank: 1, color: "#6b7280" },
+  "En curso": { name: "Doing", rank: 2, color: "#3b82f6" },
+  Bloqueada: { name: "Blocked", rank: 3, color: "#c33518" },
+  "pensar mejor": { name: "Needs Review", rank: 4, color: "#5b2840" },
+  Completada: { name: "Done", rank: 5, color: "#2f5a3a" }
 };
 
 const fallbackStatus = statusMap["No iniciada"];
