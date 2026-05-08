@@ -61,10 +61,19 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return bad("Invalid input");
 
   const data = parsed.data;
+
+  let title = data.title;
+  let notes = data.notes || null;
+  if (title.length > 70) {
+    const rest = title.slice(67).trimStart();
+    title = title.slice(0, 67).trimEnd() + "...";
+    notes = notes ? rest + "\n\n" + notes : rest;
+  }
+
   const task = await prisma.task.create({
     data: {
-      title: data.title,
-      notes: data.notes || null,
+      title,
+      notes,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       projectId: data.projectId,
       authorId: data.authorId,

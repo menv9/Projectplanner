@@ -30,9 +30,9 @@ export function FilterBar({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
           <label className="relative col-span-full md:col-span-2 lg:col-span-2">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-dust" />
+            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-dust" />
             <input
-              className="input pl-9"
+              className="input pr-9"
               placeholder="Search title or notes…"
               value={filters.q || ""}
               onChange={(e) => set("q", e.target.value)}
