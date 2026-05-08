@@ -2,6 +2,8 @@
 import { useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
+import { Sparkles } from "lucide-react";
+import { PromptModal } from "./PromptModal";
 
 export function TaskCard({ task, statuses, onClick, onUpdated }: {
   task: Task;
@@ -11,6 +13,7 @@ export function TaskCard({ task, statuses, onClick, onUpdated }: {
 }) {
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [prompting, setPrompting] = useState(false);
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
   const changeStatus = async (statusId: string) => {
@@ -94,8 +97,17 @@ export function TaskCard({ task, statuses, onClick, onUpdated }: {
             <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
             {task.author.username}
           </span>
+          <button
+            type="button"
+            className="btn-ghost !px-1"
+            onClick={(e) => { e.stopPropagation(); setPrompting(true); }}
+            title="Generate AI prompt"
+          >
+            <Sparkles size={12} />
+          </button>
         </footer>
       </div>
+      {prompting && <PromptModal taskId={task.id} onClose={() => setPrompting(false)} />}
     </button>
   );
 }
@@ -108,6 +120,7 @@ export function TaskRow({ task, statuses, onClick, onUpdated }: {
 }) {
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [prompting, setPrompting] = useState(false);
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
   const changeStatus = async (statusId: string) => {
@@ -187,8 +200,17 @@ export function TaskRow({ task, statuses, onClick, onUpdated }: {
             <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
             {task.author.username}
           </span>
+          <button
+            type="button"
+            className="btn-ghost !px-1"
+            onClick={(e) => { e.stopPropagation(); setPrompting(true); }}
+            title="Generate AI prompt"
+          >
+            <Sparkles size={11} />
+          </button>
         </div>
       </div>
+      {prompting && <PromptModal taskId={task.id} onClose={() => setPrompting(false)} />}
     </button>
   );
 }
