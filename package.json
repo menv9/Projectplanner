@@ -10,6 +10,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "import:finges": "tsx prisma/import-finges-tasks.ts",
+    "cleanup:p-priorities": "tsx prisma/cleanup-p-priorities.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {

@@ -8,13 +8,7 @@ type CsvRow = Record<string, string>;
 
 const csvPath = process.argv[2] || process.env.FINGES_CSV_PATH || "C:/Users/Gorka/Desktop/Finges app.csv";
 
-const priorityMap: Record<string, { name: string; rank: number; color: string }> = {
-  P0: { name: "P0 Critical", rank: 4, color: "#c33518" },
-  P1: { name: "P1 High", rank: 3, color: "#b88a2c" },
-  P2: { name: "P2 Medium", rank: 2, color: "#3b82f6" },
-  P3: { name: "P3 Low", rank: 1, color: "#5a5247" }
-};
-
+const lowPriority = { name: "Low", rank: 1, color: "#6b7280" };
 const fallbackPriority = { name: "Unprioritized", rank: 0, color: "#9a9081" };
 
 const statusMap: Record<string, { name: string; rank: number; color: string }> = {
@@ -84,7 +78,7 @@ function normalizeStatus(value: string) {
 
 function normalizePriority(value: string) {
   const trimmed = value.trim().toUpperCase();
-  return priorityMap[trimmed] || fallbackPriority;
+  return trimmed.startsWith("P") ? lowPriority : fallbackPriority;
 }
 
 function buildNotes(row: CsvRow) {
@@ -126,7 +120,7 @@ async function main() {
   });
 
   const priorities = new Map<string, string>();
-  for (const priority of [...Object.values(priorityMap), fallbackPriority]) {
+  for (const priority of [lowPriority, fallbackPriority]) {
     const saved = await prisma.priority.upsert({
       where: { name: priority.name },
       update: { rank: priority.rank, color: priority.color },
