@@ -24,7 +24,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>({});
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
-  const [taskView, setTaskView] = useState<"cards" | "lines">("cards");
+  const [taskView, setTaskView] = useState<"cards" | "lines">("lines");
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
