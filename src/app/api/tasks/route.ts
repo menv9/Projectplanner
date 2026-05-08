@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     if (from) (where.dueDate as Prisma.DateTimeFilter).gte = new Date(from);
     if (to) (where.dueDate as Prisma.DateTimeFilter).lte = new Date(to);
   }
+  where.deletedAt = null;
   const q = sp.get("q");
   if (q) {
     where.OR = [

@@ -63,8 +63,10 @@ model Task {
   status     Status    @relation(fields: [statusId], references: [id])
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
+  deletedAt  DateTime?
 
   @@index([projectId])
+  @@index([deletedAt])
   @@index([statusId])
   @@index([priorityId])
   @@index([authorId])

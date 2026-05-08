@@ -104,7 +104,7 @@ export function TaskDetailModal({
   };
 
   const remove = async () => {
-    if (!confirm("Delete this task permanently?")) return;
+    if (!confirm("Move this task to the trash?")) return;
     setBusy(true);
     setError(null);
     try {

@@ -1,20 +1,30 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
 
-export function TaskCard({ task, statuses, onClick, onUpdated }: {
+function StatusHoverTrigger({
+  task,
+  statuses,
+  onUpdated
+}: {
   task: Task;
   statuses: Status[];
-  onClick?: () => void;
   onUpdated?: () => void;
 }) {
-  const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
-  const due = task.dueDate ? new Date(task.dueDate) : null;
+  const [optimisticStatusId, setOptimisticStatusId] = useState<string | null>(null);
+
+  const effectiveStatusId = optimisticStatusId ?? task.status.id;
+  const effectiveStatus = statuses.find((s) => s.id === effectiveStatusId) || task.status;
+
+  useEffect(() => {
+    setOptimisticStatusId(null);
+  }, [task.status.id]);
 
   const changeStatus = async (statusId: string) => {
-    if (statusId === task.status.id) { setPicking(false); return; }
+    if (statusId === task.status.id) return;
+    setOptimisticStatusId(statusId);
     setBusy(true);
     try {
       const r = await fetch(`/api/tasks/${task.id}`, {
@@ -22,81 +32,97 @@ export function TaskCard({ task, statuses, onClick, onUpdated }: {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ statusId })
       });
-      if (r.ok) onUpdated?.();
+      if (r.ok) {
+        onUpdated?.();
+      } else {
+        setOptimisticStatusId(null);
+      }
+    } catch {
+      setOptimisticStatusId(null);
     } finally {
       setBusy(false);
-      setPicking(false);
     }
   };
 
   return (
-    <button
-      onClick={onClick}
-      className="paper-card text-left p-5 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
-      style={{ borderRadius: 0, ...(task.status.color ? { borderLeft: `3px solid ${task.status.color}` } : {}) }}
-    >
-      <div className="relative z-[1] flex flex-col h-full gap-3">
-        <header className="flex items-start justify-between gap-3">
-          <span className="eyebrow inline-flex items-center gap-1.5">
-            <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
-            {task.priority.name}
-          </span>
-          {due && (
-            <span className="numeral text-[11px] text-ash">
-              {format(due, "MMM dd").toUpperCase()}
-            </span>
-          )}
-        </header>
-
-        <h3 className="font-display text-[1.35rem] leading-[1.15] tracking-tightish text-ink line-clamp-3">
-          {task.title}
-        </h3>
-
-        {task.notes && (
-          <p className="text-[13.5px] text-ash leading-relaxed line-clamp-3">
-            {task.notes}
-          </p>
-        )}
-
-        <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            {picking ? (
-              <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-                {statuses.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="status-pill text-[9.5px] px-2 py-0.5"
-                    data-active={s.id === task.status.id}
-                    style={s.id !== task.status.id && s.color ? { color: s.color, borderColor: s.color } : {}}
-                    disabled={busy}
-                    onClick={() => changeStatus(s.id)}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="status-pill"
-                style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}
-                onClick={(e) => { e.stopPropagation(); setPicking(true); }}
-              >
-                {task.status.name}
-              </button>
-            )}
-            {task.category && (
-              <span className="chip">{task.category.name}</span>
-            )}
-          </div>
-          <span className="eyebrow flex items-center gap-1">
-            <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
-            {task.author.username}
-          </span>
-        </footer>
+    <div className="absolute left-0 top-0 bottom-0 w-6 z-20 group/status cursor-pointer">
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: effectiveStatus.color || "transparent" }}
+      />
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all duration-150 bg-paper border border-rule shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] rounded-md py-1 min-w-[150px] max-h-60 overflow-y-auto z-30">
+        {statuses.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-black/5 disabled:opacity-50"
+            disabled={busy}
+            onClick={(e) => { e.stopPropagation(); changeStatus(s.id); }}
+          >
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color || "#9a9081" }} />
+            <span className={s.id === effectiveStatusId ? "font-semibold text-ink" : "text-ash"}>{s.name}</span>
+          </button>
+        ))}
       </div>
-    </button>
+    </div>
+  );
+}
+
+export function TaskCard({ task, statuses, onClick, onUpdated }: {
+  task: Task;
+  statuses: Status[];
+  onClick?: () => void;
+  onUpdated?: () => void;
+}) {
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+
+  return (
+    <div className="relative w-full">
+      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
+      <button
+        onClick={onClick}
+        className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
+        style={{ borderRadius: 0 }}
+      >
+        <div className="relative z-[1] flex flex-col h-full gap-3">
+          <header className="flex items-start justify-end gap-3">
+            {due && (
+              <span className="numeral text-[11px] text-ash">
+                {format(due, "MMM dd").toUpperCase()}
+              </span>
+            )}
+          </header>
+
+          <h3 className="font-display text-[1.35rem] leading-[1.15] tracking-tightish text-ink line-clamp-3">
+            {task.title}
+          </h3>
+
+          {task.notes && (
+            <p className="text-[13.5px] text-ash leading-relaxed line-clamp-3">
+              {task.notes}
+            </p>
+          )}
+
+          <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              {task.category && (
+                <span className="chip">{task.category.name}</span>
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="eyebrow flex items-center gap-1">
+                <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
+                {task.author.username}
+              </span>
+              <span className="eyebrow inline-flex items-center gap-1.5">
+                <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
+                {task.priority.name}
+              </span>
+            </div>
+          </footer>
+        </div>
+      </button>
+    </div>
   );
 }
 
@@ -106,89 +132,48 @@ export function TaskRow({ task, statuses, onClick, onUpdated }: {
   onClick?: () => void;
   onUpdated?: () => void;
 }) {
-  const [picking, setPicking] = useState(false);
-  const [busy, setBusy] = useState(false);
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
-  const changeStatus = async (statusId: string) => {
-    if (statusId === task.status.id) { setPicking(false); return; }
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ statusId })
-      });
-      if (r.ok) onUpdated?.();
-    } finally {
-      setBusy(false);
-      setPicking(false);
-    }
-  };
-
   return (
-    <button
-      onClick={onClick}
-      className="paper-card text-left px-4 py-3 w-full transition hover:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-black/20"
-      style={{ borderRadius: 0, ...(task.status.color ? { borderLeft: `3px solid ${task.status.color}` } : {}) }}
-    >
-      <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:items-center">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            {picking ? (
-              <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-                {statuses.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="status-pill text-[9.5px] px-2 py-0.5"
-                    data-active={s.id === task.status.id}
-                    style={s.id !== task.status.id && s.color ? { color: s.color, borderColor: s.color } : {}}
-                    disabled={busy}
-                    onClick={() => changeStatus(s.id)}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="status-pill"
-                style={task.status.color ? { color: task.status.color, borderColor: task.status.color } : {}}
-                onClick={(e) => { e.stopPropagation(); setPicking(true); }}
-              >
-                {task.status.name}
-              </button>
+    <div className="relative w-full">
+      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
+      <button
+        onClick={onClick}
+        className="paper-card text-left px-3 py-2 pl-5 w-full transition hover:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-black/20"
+        style={{ borderRadius: 0 }}
+      >
+        <div className="relative z-[1] grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-2 md:items-center">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              {task.category && <span className="chip">{task.category.name}</span>}
+            </div>
+            <h3 className="font-display text-[1.1rem] leading-snug tracking-tightish text-ink truncate">
+              {task.title}
+            </h3>
+            {task.notes && (
+              <p className="text-[12.5px] text-ash leading-relaxed truncate">
+                {task.notes}
+              </p>
             )}
+          </div>
+
+          <div className="flex flex-col items-end gap-1 md:justify-center">
+            {due && (
+              <span className="numeral text-[11px] text-ash">
+                {format(due, "MMM dd").toUpperCase()}
+              </span>
+            )}
+            <span className="eyebrow flex items-center gap-1">
+              <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
+              {task.author.username}
+            </span>
             <span className="eyebrow inline-flex items-center gap-1.5">
               <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
               {task.priority.name}
             </span>
-            {task.category && <span className="chip">{task.category.name}</span>}
           </div>
-          <h3 className="font-display text-[1.1rem] leading-snug tracking-tightish text-ink truncate">
-            {task.title}
-          </h3>
-          {task.notes && (
-            <p className="text-[12.5px] text-ash leading-relaxed truncate mt-1">
-              {task.notes}
-            </p>
-          )}
         </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lg:justify-end">
-          {due && (
-            <span className="numeral text-[11px] text-ash">
-              {format(due, "MMM dd").toUpperCase()}
-            </span>
-          )}
-          <span className="eyebrow flex items-center gap-1">
-            <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
-            {task.author.username}
-          </span>
-        </div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }

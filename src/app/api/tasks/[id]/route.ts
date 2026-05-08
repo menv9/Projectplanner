@@ -53,6 +53,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await ensureAuth();
   if (auth.error) return auth.error;
-  await prisma.task.delete({ where: { id: params.id } });
+  await prisma.task.update({
+    where: { id: params.id },
+    data: { deletedAt: new Date() }
+  });
   return json({ ok: true });
 }

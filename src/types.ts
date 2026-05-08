@@ -13,6 +13,7 @@ export type Task = {
   dueDate: string | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
   project: Project;
   author: User;
   priority: Priority;
