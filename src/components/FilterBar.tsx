@@ -1,6 +1,6 @@
 "use client";
 import type { Category, Filters, Priority, Status, User } from "@/types";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 
 type Opts = {
   priorities: Priority[]; statuses: Status[]; categories: Category[]; users: User[];
@@ -28,19 +28,21 @@ export function FilterBar({
             <button onClick={clear} className="btn-ghost"><X size={12} /> Clear {active}</button>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          <label className="relative col-span-full md:col-span-2 lg:col-span-2">
-            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-dust" />
+        <StatusPills value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
+        <div className="flex flex-wrap items-end gap-2 mb-2">
+          <label className="min-w-[140px] flex-1">
+            <span className="eyebrow block mb-1">Search</span>
             <input
-              className="input pr-9"
-              placeholder="Search title or notes…"
+              className="input"
+              placeholder="Title or notes…"
               value={filters.q || ""}
               onChange={(e) => set("q", e.target.value)}
             />
           </label>
           <Select label="Priority" value={filters.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
-          <Select label="Status" value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
           <Select label="Category" value={filters.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           <Select label="Author" value={filters.authorId} onChange={(v) => set("authorId", v)}
                   options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
           <DateField label="From" value={filters.from} onChange={(v) => set("from", v)} />
@@ -62,6 +64,37 @@ function Select({
         {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
       </select>
     </label>
+  );
+}
+
+function StatusPills({
+  value, onChange, options
+}: {
+  value?: string;
+  onChange: (v: string) => void;
+  options: Status[];
+}) {
+  return (
+    <div className="mb-4">
+      <span className="eyebrow block mb-2">Status</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = option.id === value;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              className="status-pill"
+              data-active={active}
+              style={!active && option.color ? { color: option.color, borderColor: option.color } : {}}
+              onClick={() => onChange(active ? "" : option.id)}
+            >
+              {option.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
