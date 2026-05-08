@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Grid3X3, List, Settings as SettingsIcon, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { Category, Filters, Priority, Project, Status, Task, User } from "@/types";
 import { FilterBar } from "@/components/FilterBar";
 import { TaskCard, TaskRow } from "@/components/TaskCard";
@@ -92,6 +93,7 @@ export default function Home() {
               </div>
             )}
             <Link href="/settings" className="btn"><SettingsIcon size={14} /> Settings</Link>
+            <ThemeToggle />
             <button className="btn-ghost" onClick={logout}><LogOut size={14} /></button>
           </div>
         </div>

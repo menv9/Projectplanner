@@ -1,22 +1,23 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        paper:    "#f1ead8",   // warm cream — page bg
-        cream:    "#f8f2e2",   // lighter cream — cards
-        ivory:    "#fbf6e9",   // lightest — input fills
-        ink:      "#1a1410",   // near-black warm
-        ash:      "#5a5247",   // body muted
-        dust:     "#9a9081",   // captions
-        rule:     "#cbbf9f",   // hairlines
-        soft:     "#e2d8b8",   // subtle border
-        vermilion:"#c33518",   // primary accent
-        ochre:    "#b88a2c",   // secondary accent
-        forest:   "#2f5a3a",   // success
-        plum:     "#5b2840"    // tertiary
+        paper:    "rgb(var(--paper-rgb) / <alpha-value>)",
+        cream:    "rgb(var(--cream-rgb) / <alpha-value>)",
+        ivory:    "rgb(var(--ivory-rgb) / <alpha-value>)",
+        ink:      "rgb(var(--ink-rgb) / <alpha-value>)",
+        ash:      "rgb(var(--ash-rgb) / <alpha-value>)",
+        dust:     "rgb(var(--dust-rgb) / <alpha-value>)",
+        rule:     "rgb(var(--rule-rgb) / <alpha-value>)",
+        soft:     "rgb(var(--soft-rgb) / <alpha-value>)",
+        vermilion:"rgb(var(--vermilion-rgb) / <alpha-value>)",
+        ochre:    "rgb(var(--ochre-rgb) / <alpha-value>)",
+        forest:   "rgb(var(--forest-rgb) / <alpha-value>)",
+        plum:     "rgb(var(--plum-rgb) / <alpha-value>)"
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
