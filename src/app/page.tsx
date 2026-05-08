@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Grid3X3, List, Settings as SettingsIcon, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Category, Filters, Priority, Project, Status, Task, User } from "@/types";
 import { FilterBar } from "@/components/FilterBar";
-import { TaskCard } from "@/components/TaskCard";
+import { TaskCard, TaskRow } from "@/components/TaskCard";
 import { NewTaskPanel } from "@/components/NewTaskPanel";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
@@ -23,6 +23,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>({});
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
+  const [taskView, setTaskView] = useState<"cards" | "lines">("cards");
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
@@ -123,11 +124,35 @@ export default function Home() {
                   {activeProject.name}
                 </h2>
               </div>
-              <div className="text-right">
-                <div className="numeral text-[2.6rem] leading-none text-vermilion">
-                  {String(tasks.data?.length ?? 0).padStart(2, "0")}
+              <div className="flex items-end gap-4">
+                <div className="text-right">
+                  <div className="numeral text-[2.6rem] leading-none text-vermilion">
+                    {String(tasks.data?.length ?? 0).padStart(2, "0")}
+                  </div>
+                  <div className="eyebrow">tasks on file</div>
                 </div>
-                <div className="eyebrow">tasks on file</div>
+                <div className="view-toggle" aria-label="Task view">
+                  <button
+                    type="button"
+                    className="view-toggle-btn"
+                    data-active={taskView === "cards"}
+                    onClick={() => setTaskView("cards")}
+                    title="Card view"
+                    aria-label="Card view"
+                  >
+                    <Grid3X3 size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    className="view-toggle-btn"
+                    data-active={taskView === "lines"}
+                    onClick={() => setTaskView("lines")}
+                    title="Line view"
+                    aria-label="Line view"
+                  >
+                    <List size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -157,11 +182,21 @@ export default function Home() {
             </div>
           )}
 
-          {tasks.data && tasks.data.length > 0 && (
+          {tasks.data && tasks.data.length > 0 && taskView === "cards" && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {tasks.data.map((t, i) => (
                 <div key={t.id} className="rise-in" style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}>
                   <TaskCard task={t} onClick={() => setSelected(t)} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tasks.data && tasks.data.length > 0 && taskView === "lines" && (
+            <div className="space-y-2">
+              {tasks.data.map((t, i) => (
+                <div key={t.id} className="rise-in" style={{ animationDelay: `${Math.min(i * 20, 180)}ms` }}>
+                  <TaskRow task={t} onClick={() => setSelected(t)} />
                 </div>
               ))}
             </div>
