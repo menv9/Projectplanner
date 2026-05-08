@@ -121,7 +121,7 @@ export function TaskDetailModal({
       <button
         type="button"
         aria-label="Close task editor"
-        className="absolute inset-0 bg-ink/55 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
         onClick={close}
       />
 
@@ -129,7 +129,7 @@ export function TaskDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-editor-title"
-        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] overflow-hidden shadow-[0_30px_80px_-30px_rgba(26,20,16,0.5)]"
+        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
         style={{ borderRadius: 0 }}
       >
         <div className="relative z-[1] flex items-start justify-between gap-4 border-b border-rule px-5 py-4 sm:px-6">

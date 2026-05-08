@@ -9,9 +9,9 @@ export function Modal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-ink/55 z-40 backdrop-blur-[2px]" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/55 z-40 backdrop-blur-[2px]" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-2xl z-50 paper-card flex flex-col max-h-[90vh] shadow-[0_30px_80px_-30px_rgba(26,20,16,0.5)]"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-2xl z-50 paper-card flex flex-col max-h-[90vh] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
           style={{ borderRadius: 0 }}
         >
           <div className="relative z-[1] flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-rule">

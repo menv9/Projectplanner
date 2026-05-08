@@ -32,7 +32,7 @@ export function TaskCard({ task, statuses, onClick, onUpdated }: {
   return (
     <button
       onClick={onClick}
-      className="paper-card text-left p-5 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(26,20,16,0.25)] focus:outline-none focus:shadow-[0_0_0_2px_#1a1410]"
+      className="paper-card text-left p-5 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
       style={{ borderRadius: 0, ...(task.status.color ? { borderLeft: `3px solid ${task.status.color}` } : {}) }}
     >
       <div className="relative z-[1] flex flex-col h-full gap-3">
@@ -129,7 +129,7 @@ export function TaskRow({ task, statuses, onClick, onUpdated }: {
   return (
     <button
       onClick={onClick}
-      className="paper-card text-left px-4 py-3 w-full transition hover:shadow-[0_8px_28px_-14px_rgba(26,20,16,0.22)] focus:outline-none focus:shadow-[0_0_0_2px_#1a1410]"
+      className="paper-card text-left px-4 py-3 w-full transition hover:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-black/20"
       style={{ borderRadius: 0, ...(task.status.color ? { borderLeft: `3px solid ${task.status.color}` } : {}) }}
     >
       <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 lg:items-center">
