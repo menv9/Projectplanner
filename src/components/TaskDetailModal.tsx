@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Save, Trash2, X } from "lucide-react";
+import { Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
 
 type Opts = {
@@ -40,6 +40,9 @@ export function TaskDetailModal({
   const [form, setForm] = useState<Form | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [promptError, setPromptError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!task) {
@@ -116,6 +119,21 @@ export function TaskDetailModal({
     }
   };
 
+  const generatePrompt = async () => {
+    setGenerating(true);
+    setPromptError(null);
+    try {
+      const r = await fetch(`/api/tasks/${task.id}/prompts`, { method: "POST" });
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || "Failed"); }
+      const d = await r.json();
+      setPrompt(d.prompt);
+    } catch (e) {
+      setPromptError(e instanceof Error ? e.message : "Failed to generate prompt");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <button
@@ -129,7 +147,7 @@ export function TaskDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-editor-title"
-        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
+        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] flex flex-col shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
         style={{ borderRadius: 0 }}
       >
         <div className="relative z-[1] flex items-start justify-between gap-4 border-b border-rule px-5 py-4 sm:px-6">
@@ -144,7 +162,7 @@ export function TaskDetailModal({
           </button>
         </div>
 
-        <div className="relative z-[1] max-h-[calc(92vh-136px)] overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="relative z-[1] flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">
               <span className="eyebrow block mb-1">Title</span>
@@ -170,6 +188,28 @@ export function TaskDetailModal({
                 onChange={(e) => set("notes", e.target.value)}
               />
             </label>
+
+            <div className="block sm:col-span-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="eyebrow">Suggested Prompt</span>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={generatePrompt}
+                  disabled={generating}
+                >
+                  <Sparkles size={13} className={generating ? "animate-pulse" : ""} />
+                  {generating ? "Generating…" : "Generate"}
+                </button>
+              </div>
+              <textarea
+                className="input min-h-[100px] !text-[14px]"
+                placeholder="Click Generate to create an AI prompt for this task…"
+                value={prompt}
+                readOnly
+              />
+              {promptError && <p className="text-xs text-vermilion mt-1">{promptError}</p>}
+            </div>
           </div>
         </div>
 

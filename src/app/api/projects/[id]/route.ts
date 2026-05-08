@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { bad, ensureAuth, json } from "@/lib/api";
 
-const Patch = z.object({ name: z.string().min(1).max(60).optional(), color: z.string().nullable().optional() });
+const Patch = z.object({ name: z.string().min(1).max(60).optional(), color: z.string().nullable().optional(), context: z.string().nullable().optional() });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await ensureAuth(); if (auth.error) return auth.error;

@@ -131,6 +131,13 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
   background-color: rgba(var(--ink-rgb), 0.06);
   border-color: rgba(var(--ink-rgb), 0.45);
 }
+.dark .btn {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.dark .btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
 .btn svg,
 .btn-primary svg,
 .btn-accent svg,
@@ -144,18 +151,28 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
   font-family: var(--font-sans);
   background-color: rgb(var(--ink-rgb));
   border: 1px solid rgb(var(--ink-rgb));
-  color: rgb(var(--cream-rgb));
+  color: #f8f2e2;
 }
-.btn-primary:hover { opacity: 0.9; }
+.btn-primary:hover { opacity: 0.85; }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.dark .btn-primary {
+  background-color: #2a2824;
+  border-color: #2a2824;
+  color: #e8e2d8;
+}
 
 .btn-accent {
   @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-none;
   background-color: rgb(var(--vermilion-rgb));
   border: 1px solid rgb(var(--vermilion-rgb));
-  color: rgb(var(--cream-rgb));
+  color: #f8f2e2;
 }
-.btn-accent:hover { filter: brightness(0.95); }
+.btn-accent:hover { filter: brightness(1.1); }
+
+.dark .btn-accent {
+  color: #f8f2e2;
+}
 
 .btn-ghost {
   @apply inline-flex items-center justify-center gap-1.5 px-2 py-1 text-sm transition rounded-none;

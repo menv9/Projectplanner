@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, User } from "@/types";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
@@ -75,13 +75,15 @@ export default function SettingsPage() {
 
 type FieldDef = { name: string; placeholder: string; type?: string; required?: boolean };
 
-function Section<T extends { id: string; name: string; color?: string | null; rank?: number }>({
+function Section<T extends { id: string; name: string; color?: string | null; rank?: number; context?: string | null }>({
   n, title, subtitle, endpoint, queryKey, fields
 }: { n: string; title: string; subtitle: string; endpoint: string; queryKey: string; fields: FieldDef[] }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: [queryKey], queryFn: () => fetchJson<T[]>(endpoint) });
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [editingContext, setEditingContext] = useState<string | null>(null);
+  const [contextDraft, setContextDraft] = useState("");
 
   const add = async () => {
     setError(null);
@@ -100,6 +102,18 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
     if (!confirm("Delete?")) return;
     const res = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
     if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: [queryKey] });
+  };
+
+  const saveContext = async () => {
+    if (!editingContext) return;
+    const res = await fetch(`${endpoint}/${editingContext}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ context: contextDraft || null })
+    });
+    if (!res.ok) { alert("Failed to save context"); return; }
+    setEditingContext(null);
     qc.invalidateQueries({ queryKey: [queryKey] });
   };
 
@@ -138,15 +152,43 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
             <li className="px-6 py-6 text-sm text-ash italic">Nothing here yet.</li>
           )}
           {q.data?.map((it) => (
-            <li key={it.id} className="px-6 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule" style={{ background: it.color }} />}
-                <span className="font-display text-[1.05rem]">{it.name}</span>
-                {"rank" in it && it.rank != null && <span className="numeral text-[11px] text-dust">rank {it.rank}</span>}
-              </div>
-              <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
-                <Trash2 size={13} /> Remove
-              </button>
+            <li key={it.id}>
+              {editingContext === it.id ? (
+                <div className="px-6 py-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-[1.05rem]">{it.name} — Context</span>
+                    <div className="flex gap-2">
+                      <button className="btn-primary !py-1 !px-3 text-xs" onClick={saveContext}>Save</button>
+                      <button className="btn-ghost" onClick={() => setEditingContext(null)}><X size={13} /></button>
+                    </div>
+                  </div>
+                  <textarea
+                    className="input min-h-[120px] !text-[13px]"
+                    placeholder={`## Project stack\nNext.js 14, Tailwind, Prisma, PostgreSQL\n\n## Structure\nsrc/ — all source\nprisma/ — schema & migrations\n\n## Conventions\n- RSC by default, 'use client' when needed\n- Tailwind for styling\n- Zod for validation`}
+                    value={contextDraft}
+                    onChange={(e) => setContextDraft(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="px-6 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule" style={{ background: it.color }} />}
+                    <span className="font-display text-[1.05rem]">{it.name}</span>
+                    {"rank" in it && it.rank != null && <span className="numeral text-[11px] text-dust">rank {it.rank}</span>}
+                    {"context" in it && it.context && <span className="chip !py-0 !px-1.5 text-[9px]"><FileText size={10} /></span>}
+                  </div>
+                  <div className="flex gap-1">
+                    {"context" in it && (
+                      <button className="btn-ghost" onClick={() => { setEditingContext(it.id); setContextDraft((it as any).context || ""); }}>
+                        <FileText size={13} /> Context
+                      </button>
+                    )}
+                    <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
+                      <Trash2 size={13} /> Remove
+                    </button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>

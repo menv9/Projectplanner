@@ -7,13 +7,13 @@ const include = {
   author: { select: { id: true, username: true } }
 } as const;
 
-const SYSTEM = `You are a senior software developer. Given a task description, generate a concise, actionable prompt for a coding AI agent to implement it.
+const SYSTEM = `You are a senior software developer. Given a task description and project context, generate a concise, actionable prompt for a coding AI agent to implement it.
 
 Rules:
 - Output ONLY the prompt text, no explanations, no markdown formatting, no preamble.
 - The prompt must be in the same language as the task description.
 - Be specific about files, functions, or components that need to be created or modified.
-- Include relevant technical details (framework, libraries, patterns).
+- Use the project context to inform technical decisions (stack, conventions, architecture).
 - Keep it under 300 words.
 - Focus on what needs to be done, not why.`;
 
@@ -21,7 +21,7 @@ function buildPrompt(task: {
   title: string; notes: string | null;
   priority: { name: string }; status: { name: string };
   category: { name: string } | null;
-  project: { name: string };
+  project: { name: string; context?: string | null };
 }) {
   let p = `Task: ${task.title}\n`;
   p += `Project: ${task.project.name}\n`;
@@ -29,6 +29,7 @@ function buildPrompt(task: {
   p += `Status: ${task.status.name}\n`;
   if (task.category) p += `Category: ${task.category.name}\n`;
   if (task.notes) p += `\nNotes:\n${task.notes}\n`;
+  if (task.project.context) p += `\nProject Context:\n${task.project.context}\n`;
   return p;
 }
 
