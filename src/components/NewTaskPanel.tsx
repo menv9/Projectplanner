@@ -30,13 +30,14 @@ const empty = (currentUserId: string, opts: Opts): Form => ({
 });
 
 export function NewTaskPanel({
-  opts, currentUserId, onCreated, ready, lockedProjectId
+  opts, currentUserId, onCreated, ready, lockedProjectId, className
 }: {
   opts: Opts;
   currentUserId: string;
   onCreated: () => void;
   ready: boolean;
   lockedProjectId: string | null;
+  className?: string;
 }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Form>(empty(currentUserId, opts));

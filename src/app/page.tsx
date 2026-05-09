@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle } from "lucide-react";
+import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Task | null>(null);
   const [taskView, setTaskView] = useState<"cards" | "lines" | "kanban" | "filter">("lines");
   const [viewingTrash, setViewingTrash] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
@@ -129,13 +130,15 @@ export default function Home() {
 
       <main className="max-w-[1400px] mx-auto px-8 py-10 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10">
         {me.data && (
-          <NewTaskPanel
-            opts={opts}
-            currentUserId={me.data.id}
-            ready={ready}
-            lockedProjectId={activeProjectId}
-            onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
-          />
+          <div className="hidden lg:block">
+            <NewTaskPanel
+              opts={opts}
+              currentUserId={me.data.id}
+              ready={ready}
+              lockedProjectId={activeProjectId}
+              onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+            />
+          </div>
         )}
 
         <section className="space-y-6 min-w-0">
@@ -213,6 +216,12 @@ export default function Home() {
                     </h2>
                   </div>
                   <div className="flex items-end gap-4">
+                    <button
+                      className="btn-accent lg:hidden"
+                      onClick={() => setShowAddModal(true)}
+                    >
+                      <Plus size={14} /> Add task
+                    </button>
                     <div className="text-right">
                       <div className="numeral text-[2.6rem] leading-none text-vermilion">
                         {String(tasks.data?.length ?? 0).padStart(2, "0")}
@@ -341,6 +350,45 @@ export default function Home() {
           <div className="font-display italic text-ash">— Quietly stored on paper, kept in code.</div>
         </div>
       </footer>
+
+      {showAddModal && me.data && (
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-6 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close add task"
+            className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+            onClick={() => setShowAddModal(false)}
+          />
+          <section
+            className="paper-card relative z-[1] w-full sm:max-w-xl max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
+            style={{ borderRadius: 0 }}
+          >
+            <div className="relative z-[1] flex items-center justify-between gap-4 border-b border-rule px-5 py-4">
+              <div className="min-w-0">
+                <div className="eyebrow mb-1">New entry</div>
+                <h2 className="font-display text-[1.5rem] leading-[1.1] tracking-tightish">
+                  <span className="display-italic text-vermilion">Compose</span> a task
+                </h2>
+              </div>
+              <button type="button" className="btn-ghost shrink-0" onClick={() => setShowAddModal(false)} aria-label="Close">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="relative z-[1] flex-1 overflow-y-auto">
+              <NewTaskPanel
+                opts={opts}
+                currentUserId={me.data.id}
+                ready={ready}
+                lockedProjectId={activeProjectId}
+                onCreated={() => {
+                  qc.invalidateQueries({ queryKey: ["tasks"] });
+                  setShowAddModal(false);
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      )}
 
       <TaskDetailModal
         task={selected}

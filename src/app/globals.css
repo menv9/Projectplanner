@@ -66,7 +66,7 @@ body {
 }
 
 /* ---------- Type ---------- */
-.font-display { font-family: var(--font-display), Georgia, serif; }
+.font-display { font-family: var(--font-display), system-ui, sans-serif; }
 .display-italic { font-family: var(--font-display); font-style: italic; font-weight: 400; }
 
 .eyebrow {
