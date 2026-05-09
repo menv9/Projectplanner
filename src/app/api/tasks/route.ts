@@ -66,12 +66,16 @@ export async function GET(req: NextRequest) {
   });
   const accessibleProjectIds = accessibleProjects.map((p) => p.id);
 
-  where.projectId = { in: accessibleProjectIds };
-
-  // If a specific projectId is requested, validate it
+  // If a specific projectId is requested, validate it and scope to that project only
   const requestedProjectId = sp.get("projectId");
-  if (requestedProjectId && !accessibleProjectIds.includes(requestedProjectId)) {
-    return json([]);
+  if (requestedProjectId) {
+    if (!accessibleProjectIds.includes(requestedProjectId)) {
+      return json([]);
+    }
+    where.projectId = requestedProjectId;
+  } else {
+    // No specific project requested — show tasks from all accessible projects
+    where.projectId = { in: accessibleProjectIds };
   }
 
   const tasks = await prisma.task.findMany({
