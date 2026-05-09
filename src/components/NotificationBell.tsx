@@ -96,7 +96,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-md border border-rule bg-paper shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] origin-top-right rounded-md border border-rule bg-paper shadow-lg z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-rule">
             <h3 className="font-display text-sm">Notifications</h3>
           </div>
@@ -152,7 +152,7 @@ function NotificationRow({
         </p>
       </div>
       <button
-        className="btn-ghost shrink-0 opacity-0 group-hover:opacity-100 transition"
+        className="btn-ghost shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition"
         onClick={onMark}
         disabled={loading}
         title="Mark as read"
