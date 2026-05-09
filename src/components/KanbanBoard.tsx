@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
@@ -19,14 +20,18 @@ function KanbanBoardInner({
   onUpdated?: () => void;
 }) {
   const handleDragEnd = useCallback(
-    async (result: DropResult) => {
+    (result: DropResult) => {
       if (!result.destination) return;
       const sourceId = result.source.droppableId;
       const destId = result.destination.droppableId;
       if (sourceId === destId) return;
 
       const taskId = result.draggableId;
-      await onTaskMove?.(taskId, destId);
+      // Force synchronous React flush so the DOM updates before the drag library
+      // finishes its drop animation. Prevents React 18 batching flicker.
+      flushSync(() => {
+        onTaskMove?.(taskId, destId);
+      });
     },
     [onTaskMove]
   );

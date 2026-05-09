@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { memo, useState, useMemo } from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import type { Status, Task } from "@/types";
 import { TaskCard } from "@/components/TaskCard";
 import { Search } from "lucide-react";
 
-export function StatusColumn({
+function StatusColumnInner({
   status,
   tasks,
   statuses,
@@ -98,3 +98,5 @@ export function StatusColumn({
     </div>
   );
 }
+
+export const StatusColumn = memo(StatusColumnInner);

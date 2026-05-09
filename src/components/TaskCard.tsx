@@ -131,7 +131,7 @@ export function TaskCard({ task, statuses, onClick, onUpdated, interactive = tru
       ) : (
         <div
           onClick={onClick}
-          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)]"
+          className="paper-card text-left p-5 pl-6 w-full hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)]"
           style={{ borderRadius: 0 }}
           role="button"
           tabIndex={0}
