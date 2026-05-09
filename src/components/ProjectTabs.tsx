@@ -30,7 +30,7 @@ export function ProjectTabs({
   };
 
   return (
-    <nav className="flex flex-wrap items-end gap-x-7 gap-y-1 border-b border-rule">
+    <nav className="flex items-end gap-x-5 sm:gap-x-7 border-b border-rule overflow-x-auto scrollbar-hide pb-px">
       {projects.map((p, i) => {
         const active = p.id === activeId;
         return (
@@ -38,20 +38,20 @@ export function ProjectTabs({
             key={p.id}
             data-active={active}
             onClick={() => onSelect(p.id)}
-            className="tab inline-flex items-center gap-2"
+            className="tab inline-flex items-center gap-1.5 sm:gap-2 flex-shrink-0"
           >
-            <span className="numeral text-dust">{String(i + 1).padStart(2, "0")}</span>
+            <span className="numeral text-dust hidden sm:inline">{String(i + 1).padStart(2, "0")}</span>
             {p.color && <span className="dot" style={{ background: p.color }} />}
-            <span>{p.name}</span>
+            <span className="truncate max-w-[100px] sm:max-w-none">{p.name}</span>
           </button>
         );
       })}
 
       {adding ? (
-        <div className="flex items-center gap-1 pb-2 pt-1">
+        <div className="flex items-center gap-1 pb-2 pt-1 flex-shrink-0">
           <input
             autoFocus
-            className="input !py-1 !px-2 max-w-[160px] text-sm"
+            className="input !py-1 !px-2 max-w-[140px] text-sm"
             placeholder="Project name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -69,10 +69,10 @@ export function ProjectTabs({
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="tab inline-flex items-center gap-1.5 !text-vermilion hover:!text-ink"
+          className="tab inline-flex items-center gap-1.5 !text-vermilion hover:!text-ink flex-shrink-0"
           title="New project"
         >
-          <Plus size={12} strokeWidth={2.5} /> New
+          <Plus size={12} strokeWidth={2.5} /> <span className="hidden sm:inline">New</span>
         </button>
       )}
     </nav>

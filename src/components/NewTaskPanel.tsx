@@ -30,7 +30,7 @@ const empty = (currentUserId: string, opts: Opts): Form => ({
 });
 
 export function NewTaskPanel({
-  opts, currentUserId, onCreated, ready, lockedProjectId, className
+  opts, currentUserId, onCreated, ready, lockedProjectId, className, plain
 }: {
   opts: Opts;
   currentUserId: string;
@@ -38,6 +38,7 @@ export function NewTaskPanel({
   ready: boolean;
   lockedProjectId: string | null;
   className?: string;
+  plain?: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Form>(empty(currentUserId, opts));
@@ -96,9 +97,9 @@ export function NewTaskPanel({
     }
   };
 
-  return (
-    <aside className="paper-card sticky top-6 h-fit">
-      <div className="relative z-[1] flex flex-col">
+  const inner = (
+    <div className="relative z-[1] flex flex-col">
+      {!plain && (
         <header className="px-5 pt-5 pb-4">
           <div className="flex items-baseline justify-between">
             <span className="eyebrow">New entry</span>
@@ -114,48 +115,56 @@ export function NewTaskPanel({
             <div className="progress-fill" style={{ width: `${((step + 1) / 2) * 100}%` }} />
           </div>
         </header>
+      )}
 
-        <div className="px-5 pb-4 min-h-[280px]">
-          {!ready ? (
-            <p className="text-sm text-ash">
-              Add a project, priority and status in <span className="display-italic">Settings</span> to begin.
-            </p>
-          ) : step === 0 ? (
-            <StepBasics key="b" form={form} setForm={setForm} opts={opts} hideProject={!!lockedProjectId} />
+      <div className={`${plain ? "px-5 pt-4 pb-4" : "px-5 pb-4"} ${plain ? "" : "min-h-[280px]"}`}>
+        {!ready ? (
+          <p className="text-sm text-ash">
+            Add a project, priority and status in <span className="display-italic">Settings</span> to begin.
+          </p>
+        ) : step === 0 ? (
+          <StepBasics key="b" form={form} setForm={setForm} opts={opts} hideProject={!!lockedProjectId} />
+        ) : (
+          <StepDetails key="d" form={form} setForm={setForm} />
+        )}
+      </div>
+
+      <footer className={`px-5 py-4 border-t border-rule/70 flex items-center justify-between gap-2 ${plain ? "" : "bg-cream/40"}`}>
+        <div className="flex items-center gap-1">
+          {step > 0 ? (
+            <button className="btn-ghost" onClick={() => setStep(step - 1)} disabled={busy}>
+              <ArrowLeft size={14} /> Back
+            </button>
           ) : (
-            <StepDetails key="d" form={form} setForm={setForm} />
+            (form.title || form.notes) && (
+              <button className="btn-ghost" onClick={reset} disabled={busy}>
+                <RotateCcw size={12} /> Reset
+              </button>
+            )
           )}
         </div>
+        <div className="flex items-center gap-2">
+          {success && <span className="eyebrow text-forest inline-flex items-center gap-1"><Check size={12} /> Saved</span>}
+          {error && <span className="eyebrow text-vermilion">{error}</span>}
+          {step < 1 ? (
+            <button className="btn-primary" onClick={() => setStep(step + 1)} disabled={!canStep0 || !ready}>
+              Continue <ArrowRight size={14} />
+            </button>
+          ) : (
+            <button className="btn-accent" onClick={submit} disabled={busy || !ready}>
+              {busy ? "Filing…" : "File task"}
+            </button>
+          )}
+        </div>
+      </footer>
+    </div>
+  );
 
-        <footer className="px-5 py-4 border-t border-rule/70 flex items-center justify-between gap-2 bg-cream/40">
-          <div className="flex items-center gap-1">
-            {step > 0 ? (
-              <button className="btn-ghost" onClick={() => setStep(step - 1)} disabled={busy}>
-                <ArrowLeft size={14} /> Back
-              </button>
-            ) : (
-              (form.title || form.notes) && (
-                <button className="btn-ghost" onClick={reset} disabled={busy}>
-                  <RotateCcw size={12} /> Reset
-                </button>
-              )
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {success && <span className="eyebrow text-forest inline-flex items-center gap-1"><Check size={12} /> Saved</span>}
-            {error && <span className="eyebrow text-vermilion">{error}</span>}
-            {step < 1 ? (
-              <button className="btn-primary" onClick={() => setStep(step + 1)} disabled={!canStep0 || !ready}>
-                Continue <ArrowRight size={14} />
-              </button>
-            ) : (
-              <button className="btn-accent" onClick={submit} disabled={busy || !ready}>
-                {busy ? "Filing…" : "File task"}
-              </button>
-            )}
-          </div>
-        </footer>
-      </div>
+  if (plain) return inner;
+
+  return (
+    <aside className={`paper-card sticky top-6 h-fit ${className || ""}`}>
+      {inner}
     </aside>
   );
 }

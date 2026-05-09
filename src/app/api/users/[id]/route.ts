@@ -8,6 +8,7 @@ const Patch = z.object({ pin: z.string().optional() });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await ensureAuth(); if (auth.error) return auth.error;
+  if (auth.user.id !== params.id) return bad("You can only change your own PIN", 403);
   const p = Patch.safeParse(await req.json().catch(() => ({})));
   if (!p.success) return bad("Invalid input");
   const data: { pinHash?: string } = {};

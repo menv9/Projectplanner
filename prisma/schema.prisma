@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  pinHash   String
-  createdAt DateTime @default(now())
-  tasks     Task[]   @relation("Author")
-  teams     TeamMember[]
+  id         String   @id @default(cuid())
+  username   String   @unique
+  pinHash    String
+  createdAt  DateTime @default(now())
+  tasks      Task[]   @relation("Author")
+  teams      TeamMember[]
+  priorities Priority[]
+  statuses   Status[]
+  categories Category[]
 }
 
 model Team {
@@ -39,7 +42,7 @@ model TeamMember {
 
 model Project {
   id      String  @id @default(cuid())
-  name    String  @unique
+  name    String
   color   String?
   context String? @db.Text
   teamId  String?
@@ -47,30 +50,46 @@ model Project {
   ownerId String?
   tasks   Task[]
 
+  @@unique([name, ownerId])
   @@index([ownerId])
 }
 
 model Priority {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  rank  Int     @default(0)
-  color String?
-  tasks Task[]
+  id      String  @id @default(cuid())
+  name    String
+  rank    Int     @default(0)
+  color   String?
+  ownerId String
+  user    User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@unique([name, ownerId])
+  @@index([ownerId])
 }
 
 model Status {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  rank  Int     @default(0)
-  color String?
-  tasks Task[]
+  id      String  @id @default(cuid())
+  name    String
+  rank    Int     @default(0)
+  color   String?
+  ownerId String
+  user    User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@unique([name, ownerId])
+  @@index([ownerId])
 }
 
 model Category {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  color String?
-  tasks Task[]
+  id      String  @id @default(cuid())
+  name    String
+  color   String?
+  ownerId String
+  user    User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@unique([name, ownerId])
+  @@index([ownerId])
 }
 
 model Task {

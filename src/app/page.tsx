@@ -95,31 +95,33 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-[1400px] mx-auto px-8 py-5 flex items-end justify-between gap-6">
-          <div>
-            <div className="eyebrow mb-1">Volume 01 — {today.getFullYear()}</div>
-            <h1 className="font-display text-[2.4rem] leading-[0.95] tracking-tightish">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="eyebrow mb-0.5 hidden sm:block">Volume 01 — {today.getFullYear()}</div>
+            <h1 className="font-display text-[1.4rem] sm:text-[2rem] lg:text-[2.4rem] leading-[0.95] tracking-tightish truncate">
               <span className="display-italic text-vermilion">Atelier</span>
               <span className="text-ink">.</span>
-              <span className="font-display text-ink"> Project Planner</span>
+              <span className="font-display text-ink hidden sm:inline"> Project Planner</span>
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {me.data && (
-              <div className="text-right hidden sm:block">
+              <div className="text-right hidden md:block">
                 <div className="eyebrow">Signed in</div>
                 <div className="font-display italic text-[1.05rem] leading-tight">{me.data.username}</div>
               </div>
             )}
-            <button className={viewingTrash ? "btn-primary" : "btn"} onClick={() => setViewingTrash(!viewingTrash)}>
-              <Trash2 size={14} /> {trashTasks.data?.length ?? 0}
+            <button className={viewingTrash ? "btn-primary" : "btn"} onClick={() => setViewingTrash(!viewingTrash)} title="Trash">
+              <Trash2 size={14} /> <span className="hidden sm:inline">{trashTasks.data?.length ?? 0}</span>
             </button>
-            <Link href="/settings" className="btn"><SettingsIcon size={14} /> Settings</Link>
+            <Link href="/settings" className="btn" title="Settings">
+              <SettingsIcon size={14} /> <span className="hidden sm:inline">Settings</span>
+            </Link>
             <ThemeToggle />
-            <button className="btn-ghost" onClick={logout}><LogOut size={14} /></button>
+            <button className="btn-ghost" onClick={logout} title="Log out"><LogOut size={14} /></button>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <ProjectTabs
             projects={opts.projects}
             activeId={activeProjectId}
@@ -128,7 +130,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto px-8 py-10 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:gap-10">
         {me.data && (
           <div className="hidden lg:block">
             <NewTaskPanel
@@ -147,22 +149,22 @@ export default function Home() {
               <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
                 <div>
                   <div className="eyebrow mb-1">Trash</div>
-                  <h2 className="font-display text-[2.6rem] leading-[0.95] tracking-tightish">
+                  <h2 className="font-display text-[1.8rem] sm:text-[2.6rem] leading-[0.95] tracking-tightish">
                     {trashTasks.data?.length ?? 0} items
                   </h2>
                 </div>
                 <button type="button" className="btn-ghost" onClick={() => setViewingTrash(false)}>
-                  <RotateCcw size={14} /> Back
+                  <RotateCcw size={14} /> <span className="hidden sm:inline">Back</span>
                 </button>
               </div>
 
               {trashTasks.isLoading && <div className="text-ash eyebrow">Loading…</div>}
 
               {trashTasks.data && trashTasks.data.length === 0 && (
-                <div className="paper-card p-12 text-center">
+                <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
                     <span className="eyebrow">Empty trash</span>
-                    <p className="font-display text-[1.4rem] mt-2 italic text-ash">No deleted tasks.</p>
+                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No deleted tasks.</p>
                   </div>
                 </div>
               )}
@@ -183,7 +185,7 @@ export default function Home() {
                     };
                     return (
                       <div key={t.id} className="paper-card text-left px-3 py-2.5 pl-5 w-full" style={{ borderRadius: 0 }}>
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="chip text-[9px]">{t.project.name}</span>
@@ -208,22 +210,22 @@ export default function Home() {
           ) : (
             <>
               {activeProject ? (
-                <div className="flex items-end justify-between gap-4 flex-wrap">
-                  <div>
+                <div className="flex items-end justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
                     <div className="eyebrow mb-1">Now reading</div>
-                    <h2 className="font-display text-[2.6rem] leading-[0.95] tracking-tightish">
+                    <h2 className="font-display text-[1.6rem] sm:text-[2.2rem] lg:text-[2.6rem] leading-[0.95] tracking-tightish truncate">
                       {activeProject.name}
                     </h2>
                   </div>
-                  <div className="flex items-end gap-4">
+                  <div className="flex items-end gap-2 sm:gap-4 flex-shrink-0">
                     <button
                       className="btn-accent lg:hidden"
                       onClick={() => setShowAddModal(true)}
                     >
-                      <Plus size={14} /> Add task
+                      <Plus size={14} /> <span className="hidden sm:inline">Add task</span>
                     </button>
                     <div className="text-right">
-                      <div className="numeral text-[2.6rem] leading-none text-vermilion">
+                      <div className="numeral text-[1.8rem] sm:text-[2.6rem] leading-none text-vermilion">
                         {String(tasks.data?.length ?? 0).padStart(2, "0")}
                       </div>
                       <div className="eyebrow">tasks on file</div>
@@ -273,10 +275,10 @@ export default function Home() {
                   </div>
                 </div>
               ) : (
-                <div className="paper-card p-12 text-center">
+                <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
                     <span className="eyebrow">Empty workshop</span>
-                    <h2 className="font-display text-[1.8rem] mt-2">
+                    <h2 className="font-display text-[1.4rem] sm:text-[1.8rem] mt-2">
                       <span className="display-italic">Begin</span> by creating a project.
                     </h2>
                     <p className="text-sm text-ash mt-2">Use the <em>+ New</em> tab above to add the first one.</p>
@@ -293,10 +295,10 @@ export default function Home() {
               )}
 
               {activeProject && tasks.data && tasks.data.length === 0 && (
-                <div className="paper-card p-12 text-center">
+                <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
                     <span className="eyebrow">A blank page</span>
-                    <p className="font-display text-[1.4rem] mt-2 italic text-ash">No entries yet.</p>
+                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No entries yet.</p>
                   </div>
                 </div>
               )}
@@ -344,8 +346,8 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="max-w-[1400px] mx-auto px-8 pb-10 pt-6 mt-6 border-t border-rule">
-        <div className="flex items-end justify-between text-xs">
+      <footer className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-6 mt-6 border-t border-rule">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 text-xs">
           <div className="eyebrow">Atelier — A workshop for the things you intend to do</div>
           <div className="font-display italic text-ash">— Quietly stored on paper, kept in code.</div>
         </div>
@@ -380,6 +382,7 @@ export default function Home() {
                 currentUserId={me.data.id}
                 ready={ready}
                 lockedProjectId={activeProjectId}
+                plain
                 onCreated={() => {
                   qc.invalidateQueries({ queryKey: ["tasks"] });
                   setShowAddModal(false);

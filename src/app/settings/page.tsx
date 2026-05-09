@@ -300,6 +300,7 @@ function TeamsSection() {
   const qc = useQueryClient();
   const teams = useQuery({ queryKey: ["teams"], queryFn: () => fetchJson<Team[]>("/api/teams") });
   const users = useQuery({ queryKey: ["users"], queryFn: () => fetchJson<User[]>("/api/users") });
+  const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState<string | null>(null);
@@ -336,6 +337,16 @@ function TeamsSection() {
   const removeMember = async (teamId: string, userId: string) => {
     if (!confirm("Remove this member?")) return;
     const res = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: "DELETE" });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: ["teams"] });
+  };
+
+  const changeRole = async (teamId: string, userId: string, role: "admin" | "member") => {
+    const res = await fetch(`/api/teams/${teamId}/members/${userId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ role })
+    });
     if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
     qc.invalidateQueries({ queryKey: ["teams"] });
   };
@@ -386,10 +397,19 @@ function TeamsSection() {
                     <span key={m.id} className="inline-flex items-center gap-1.5 chip">
                       @{m.username}
                       {m.role === "admin" && <span className="text-[9px] text-vermilion">admin</span>}
-                      {team.role === "admin" && m.userId !== (users.data?.find((u) => u.username === m.username)?.id) && (
-                        <button className="ml-1 text-ash hover:text-vermilion" onClick={() => removeMember(team.id, m.userId)}>
-                          <UserX size={11} />
-                        </button>
+                      {team.role === "admin" && m.userId !== me.data?.id && (
+                        <>
+                          <button
+                            className="ml-1 text-ash hover:text-ink"
+                            title={m.role === "admin" ? "Demote to member" : "Promote to admin"}
+                            onClick={() => changeRole(team.id, m.userId, m.role === "admin" ? "member" : "admin")}
+                          >
+                            {m.role === "admin" ? "↓" : "↑"}
+                          </button>
+                          <button className="ml-0.5 text-ash hover:text-vermilion" onClick={() => removeMember(team.id, m.userId)}>
+                            <UserX size={11} />
+                          </button>
+                        </>
                       )}
                     </span>
                   ))}
@@ -430,6 +450,7 @@ function TeamsSection() {
 function UsersSection() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["users"], queryFn: () => fetchJson<User[]>("/api/users") });
+  const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -489,7 +510,9 @@ function UsersSection() {
             <li key={u.id} className="px-6 py-3 flex items-center justify-between gap-3">
               <span className="font-display text-[1.05rem]">@{u.username}</span>
               <span className="flex gap-1">
-                <button className="btn-ghost" onClick={() => resetPin(u.id)}>Reset PIN</button>
+                {me.data?.id === u.id && (
+                  <button className="btn-ghost" onClick={() => resetPin(u.id)}>Reset PIN</button>
+                )}
                 <button className="btn-ghost text-vermilion" onClick={() => del(u.id)}><Trash2 size={13} /> Remove</button>
               </span>
             </li>

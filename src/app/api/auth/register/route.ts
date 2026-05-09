@@ -29,6 +29,35 @@ export async function POST(req: NextRequest) {
     select: { id: true, username: true }
   });
 
+  // Create default settings for the new user
+  const priorities = [
+    { name: "Low", rank: 1, color: "#6b7280" },
+    { name: "Medium", rank: 2, color: "#f59e0b" },
+    { name: "High", rank: 3, color: "#ef4444" }
+  ];
+  const statuses = [
+    { name: "Todo", rank: 1, color: "#6b7280" },
+    { name: "Doing", rank: 2, color: "#3b82f6" },
+    { name: "Done", rank: 3, color: "#10b981" }
+  ];
+  const categories = [
+    { name: "Frontend", color: "#7c5cff" },
+    { name: "Backend", color: "#22c55e" },
+    { name: "Design", color: "#ec4899" },
+    { name: "Bug", color: "#ef4444" }
+  ];
+
+  for (const p of priorities) {
+    await prisma.priority.create({ data: { ...p, ownerId: user.id } }).catch(() => {});
+  }
+  for (const s of statuses) {
+    await prisma.status.create({ data: { ...s, ownerId: user.id } }).catch(() => {});
+  }
+  for (const c of categories) {
+    await prisma.category.create({ data: { ...c, ownerId: user.id } }).catch(() => {});
+  }
+  await prisma.project.create({ data: { name: "Inbox", color: "#7c5cff", ownerId: user.id } }).catch(() => {});
+
   if (existingCount === 0) {
     const token = await signSession({ uid: user.id, username: user.username });
     await setSessionCookie(token);
