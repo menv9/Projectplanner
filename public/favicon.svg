@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <style>
+    .ink { fill: #1a1410; }
+    .vermilion { fill: #c33518; }
+    @media (prefers-color-scheme: dark) {
+      .ink { fill: #ebe6dc; }
+      .vermilion { fill: #e85535; }
+    }
+  </style>
+  <path class="ink" d="M16 4L4 28h4.5l2.5-5h13l2.5 5H31L19 4h-3zm-1.5 6l4.5 9h-9l4.5-9z"/>
+  <circle class="vermilion" cx="24" cy="7" r="2.5"/>
+</svg>
