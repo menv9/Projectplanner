@@ -5,8 +5,23 @@ import { bad, ensureAuth, json } from "@/lib/api";
 
 const Create = z.object({ name: z.string().min(1).max(60), color: z.string().optional().nullable() });
 
+const DEFAULTS = [
+  { name: "Frontend", color: "#7c5cff" },
+  { name: "Backend", color: "#22c55e" },
+  { name: "Design", color: "#ec4899" },
+  { name: "Bug", color: "#ef4444" }
+];
+
 export async function GET() {
   const auth = await ensureAuth(); if (auth.error) return auth.error;
+
+  const count = await prisma.category.count({ where: { ownerId: auth.user.id } });
+  if (count === 0) {
+    for (const d of DEFAULTS) {
+      await prisma.category.create({ data: { ...d, ownerId: auth.user.id } }).catch(() => {});
+    }
+  }
+
   return json(await prisma.category.findMany({
     where: { ownerId: auth.user.id },
     orderBy: { name: "asc" }
