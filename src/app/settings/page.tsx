@@ -12,6 +12,9 @@ const fetchJson = async <T,>(url: string): Promise<T> => {
 };
 
 export default function SettingsPage() {
+  const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
+  const canManageUsers = me.data && ["eris", "gorka"].includes(me.data.username.toLowerCase());
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm">
@@ -61,7 +64,7 @@ export default function SettingsPage() {
           fields={[{ name: "name", placeholder: "Category name", required: true }, { name: "color", placeholder: "#hex", type: "color" }]}
         />
         <TeamsSection />
-        <UsersSection />
+        {canManageUsers && <UsersSection />}
       </main>
     </div>
   );
