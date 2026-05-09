@@ -44,6 +44,32 @@ export async function GET(req: NextRequest) {
     ];
   }
 
+  // Scope tasks to projects the user can access
+  const memberships = await prisma.teamMember.findMany({
+    where: { userId: auth.user.id },
+    select: { teamId: true }
+  });
+  const teamIds = memberships.map((m) => m.teamId);
+
+  const accessibleProjects = await prisma.project.findMany({
+    where: {
+      OR: [
+        { teamId: null },
+        { teamId: { in: teamIds } }
+      ]
+    },
+    select: { id: true }
+  });
+  const accessibleProjectIds = accessibleProjects.map((p) => p.id);
+
+  where.projectId = { in: accessibleProjectIds };
+
+  // If a specific projectId is requested, validate it
+  const requestedProjectId = sp.get("projectId");
+  if (requestedProjectId && !accessibleProjectIds.includes(requestedProjectId)) {
+    return json([]);
+  }
+
   const tasks = await prisma.task.findMany({
     where,
     include: {
@@ -62,6 +88,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return bad("Invalid input");
 
   const data = parsed.data;
+
+  // Verify the user can access the project
+  const project = await prisma.project.findUnique({ where: { id: data.projectId } });
+  if (!project) return bad("Project not found", 404);
+  if (project.teamId) {
+    const member = await prisma.teamMember.findUnique({
+      where: { teamId_userId: { teamId: project.teamId, userId: auth.user.id } }
+    });
+    if (!member) return bad("Project access denied", 403);
+  }
 
   let title = data.title;
   let notes = data.notes || null;

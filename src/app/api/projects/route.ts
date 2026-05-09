@@ -7,8 +7,26 @@ const Create = z.object({ name: z.string().min(1).max(60), color: z.string().opt
 
 export async function GET() {
   const auth = await ensureAuth(); if (auth.error) return auth.error;
-  return json(await prisma.project.findMany({ orderBy: { name: "asc" } }));
+
+  const memberships = await prisma.teamMember.findMany({
+    where: { userId: auth.user.id },
+    select: { teamId: true }
+  });
+  const teamIds = memberships.map((m) => m.teamId);
+
+  const projects = await prisma.project.findMany({
+    where: {
+      OR: [
+        { teamId: null },
+        { teamId: { in: teamIds } }
+      ]
+    },
+    orderBy: { name: "asc" }
+  });
+
+  return json(projects);
 }
+
 export async function POST(req: NextRequest) {
   const auth = await ensureAuth(); if (auth.error) return auth.error;
   const p = Create.safeParse(await req.json().catch(() => ({})));

@@ -13,14 +13,38 @@ model User {
   pinHash   String
   createdAt DateTime @default(now())
   tasks     Task[]   @relation("Author")
+  teams     TeamMember[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  members   TeamMember[]
+  projects  Project[]
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
 }
 
 model Project {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  color String?
+  id      String  @id @default(cuid())
+  name    String  @unique
+  color   String?
   context String? @db.Text
-  tasks Task[]
+  teamId  String?
+  team    Team?   @relation(fields: [teamId], references: [id])
+  tasks   Task[]
 }
 
 model Priority {

@@ -2,8 +2,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, FileText, Trash2, X } from "lucide-react";
-import type { Category, Priority, Project, Status, User } from "@/types";
+import { ArrowLeft, FileText, Trash2, X, Users, Plus, UserPlus, UserX } from "lucide-react";
+import type { Category, Priority, Project, Status, Team, User } from "@/types";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url);
@@ -27,14 +27,7 @@ export default function SettingsPage() {
       </header>
 
       <main className="max-w-[1100px] mx-auto px-8 py-10 space-y-8">
-        <Section<Project>
-          n="01"
-          title="Projects"
-          subtitle="Each project becomes its own tab on the workshop floor."
-          endpoint="/api/projects"
-          queryKey="projects"
-          fields={[{ name: "name", placeholder: "Project name", required: true }, { name: "color", placeholder: "#hex", type: "color" }]}
-        />
+        <ProjectsSection />
         <Section<Priority>
           n="02"
           title="Priorities"
@@ -67,9 +60,115 @@ export default function SettingsPage() {
           queryKey="categories"
           fields={[{ name: "name", placeholder: "Category name", required: true }, { name: "color", placeholder: "#hex", type: "color" }]}
         />
+        <TeamsSection />
         <UsersSection />
       </main>
     </div>
+  );
+}
+
+function ProjectsSection() {
+  const qc = useQueryClient();
+  const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
+  const teams = useQuery({ queryKey: ["teams"], queryFn: () => fetchJson<Team[]>("/api/teams") });
+  const [draft, setDraft] = useState({ name: "", color: "" });
+  const [error, setError] = useState<string | null>(null);
+
+  const add = async () => {
+    setError(null);
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: draft.name, color: draft.color || null })
+    });
+    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    setDraft({ name: "", color: "" });
+    qc.invalidateQueries({ queryKey: ["projects"] });
+  };
+
+  const del = async (id: string) => {
+    if (!confirm("Delete?")) return;
+    const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: ["projects"] });
+  };
+
+  const assignTeam = async (projectId: string, teamId: string | null) => {
+    const res = await fetch(`/api/projects/${projectId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ teamId })
+    });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: ["projects"] });
+  };
+
+  const adminTeamIds = new Set(teams.data?.filter((t) => t.role === "admin").map((t) => t.id) || []);
+
+  return (
+    <section className="paper-card">
+      <div className="relative z-[1]">
+        <header className="px-6 pt-5 pb-4 border-b border-rule">
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="numeral text-vermilion text-[12px]">01</span>
+            <span className="hairline flex-1 translate-y-[-3px]" />
+          </div>
+          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Projects</h2>
+          <p className="text-sm text-ash mt-1 italic">Each project becomes its own tab on the workshop floor.</p>
+        </header>
+
+        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label className="block">
+              <span className="eyebrow block mb-1">Project name</span>
+              <input className="input" placeholder="Project name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            </label>
+            <label className="block">
+              <span className="eyebrow block mb-1">Color</span>
+              <input className="input" type="color" value={draft.color} onChange={(e) => setDraft({ ...draft, color: e.target.value })} />
+            </label>
+          </div>
+          <button className="btn-primary md:self-end" onClick={add}>Add entry</button>
+          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+        </div>
+
+        <ul className="divide-y divide-rule">
+          {projects.data?.length === 0 && (
+            <li className="px-6 py-6 text-sm text-ash italic">Nothing here yet.</li>
+          )}
+          {projects.data?.map((it) => (
+            <li key={it.id}>
+              <div className="px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule flex-shrink-0" style={{ background: it.color }} />}
+                  <span className="font-display text-[1.05rem] truncate">{it.name}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {teams.data && teams.data.length > 0 && (
+                    <select
+                      className="input py-1.5 text-xs"
+                      value={it.teamId || ""}
+                      onChange={(e) => assignTeam(it.id, e.target.value || null)}
+                      disabled={it.teamId ? !adminTeamIds.has(it.teamId) : false}
+                    >
+                      <option value="">No team</option>
+                      {teams.data
+                        .filter((t) => !it.teamId || adminTeamIds.has(t.id) || t.id === it.teamId)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </select>
+                  )}
+                  <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
+                    <Trash2 size={13} /> Remove
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -197,6 +296,137 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
   );
 }
 
+function TeamsSection() {
+  const qc = useQueryClient();
+  const teams = useQuery({ queryKey: ["teams"], queryFn: () => fetchJson<Team[]>("/api/teams") });
+  const users = useQuery({ queryKey: ["users"], queryFn: () => fetchJson<User[]>("/api/users") });
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [addingMember, setAddingMember] = useState<string | null>(null);
+  const [memberName, setMemberName] = useState("");
+
+  const add = async () => {
+    setError(null);
+    const res = await fetch("/api/teams", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name })
+    });
+    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    setName("");
+    qc.invalidateQueries({ queryKey: ["teams"] });
+  };
+
+  const del = async (id: string) => {
+    if (!confirm("Delete this team? Projects will become unassigned.")) return;
+    const res = await fetch(`/api/teams/${id}`, { method: "DELETE" });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: ["teams"] });
+    qc.invalidateQueries({ queryKey: ["projects"] });
+  };
+
+  const addMember = async (teamId: string) => {
+    const res = await fetch(`/api/teams/${teamId}/members`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: memberName })
+    });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    setMemberName("");
+    setAddingMember(null);
+    qc.invalidateQueries({ queryKey: ["teams"] });
+  };
+
+  const removeMember = async (teamId: string, userId: string) => {
+    if (!confirm("Remove this member?")) return;
+    const res = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: "DELETE" });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    qc.invalidateQueries({ queryKey: ["teams"] });
+  };
+
+  return (
+    <section className="paper-card">
+      <div className="relative z-[1]">
+        <header className="px-6 pt-5 pb-4 border-b border-rule">
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="numeral text-vermilion text-[12px]">05</span>
+            <span className="hairline flex-1 translate-y-[-3px]" />
+          </div>
+          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Teams</h2>
+          <p className="text-sm text-ash mt-1 italic">Share projects with other contributors.</p>
+        </header>
+
+        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
+          <label className="block">
+            <span className="eyebrow block mb-1">Team name</span>
+            <input className="input" placeholder="e.g. Frontend Squad" value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <button className="btn-primary md:self-end" onClick={add}>Create team</button>
+          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+        </div>
+
+        <ul className="divide-y divide-rule">
+          {teams.data?.length === 0 && (
+            <li className="px-6 py-6 text-sm text-ash italic">No teams yet.</li>
+          )}
+          {teams.data?.map((team) => (
+            <li key={team.id} className="px-6 py-4">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <span className="font-display text-[1.05rem]">{team.name}</span>
+                  <span className="chip ml-2 text-[9px]">{team.role}</span>
+                </div>
+                {team.role === "admin" && (
+                  <button className="btn-ghost text-vermilion" onClick={() => del(team.id)}>
+                    <Trash2 size={13} /> Delete
+                  </button>
+                )}
+              </div>
+
+              <div className="mb-3">
+                <span className="eyebrow block mb-2">Members</span>
+                <div className="flex flex-wrap gap-2">
+                  {team.members.map((m) => (
+                    <span key={m.id} className="inline-flex items-center gap-1.5 chip">
+                      @{m.username}
+                      {m.role === "admin" && <span className="text-[9px] text-vermilion">admin</span>}
+                      {team.role === "admin" && m.userId !== (users.data?.find((u) => u.username === m.username)?.id) && (
+                        <button className="ml-1 text-ash hover:text-vermilion" onClick={() => removeMember(team.id, m.userId)}>
+                          <UserX size={11} />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {team.role === "admin" && (
+                <div className="flex items-center gap-2">
+                  {addingMember === team.id ? (
+                    <>
+                      <input
+                        className="input py-1.5 text-sm"
+                        placeholder="username"
+                        value={memberName}
+                        onChange={(e) => setMemberName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addMember(team.id)}
+                      />
+                      <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => addMember(team.id)}>Add</button>
+                      <button className="btn-ghost" onClick={() => { setAddingMember(null); setMemberName(""); }}>
+                        <X size={13} />
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn-ghost text-xs" onClick={() => setAddingMember(team.id)}>
+                      <UserPlus size={13} /> Add member
+                    </button>
+                  )}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 function UsersSection() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["users"], queryFn: () => fetchJson<User[]>("/api/users") });
@@ -231,7 +461,7 @@ function UsersSection() {
       <div className="relative z-[1]">
         <header className="px-6 pt-5 pb-4 border-b border-rule">
           <div className="flex items-baseline gap-3 mb-1">
-            <span className="numeral text-vermilion text-[12px]">05</span>
+            <span className="numeral text-vermilion text-[12px]">06</span>
             <span className="hairline flex-1 translate-y-[-3px]" />
           </div>
           <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Contributors</h2>
