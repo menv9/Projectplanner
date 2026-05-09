@@ -6,6 +6,8 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
 
+const normalizeName = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+
 function KanbanBoardInner({
   tasks,
   statuses,
@@ -21,9 +23,18 @@ function KanbanBoardInner({
 }) {
   const [items, setItems] = useState(tasks);
 
+  // Build a lookup from normalized status name -> current user's Status object.
+  // This handles the migration case where existing tasks reference old status
+  // IDs (owned by the first user) but the current user has new statuses.
+  const statusByName = useMemo(() => {
+    const map = new Map<string, Status>();
+    for (const s of statuses) {
+      map.set(normalizeName(s.name), s);
+    }
+    return map;
+  }, [statuses]);
+
   // Sync from server when the parent query returns fresh data.
-  // We only swap when the task IDs or order actually differ so
-  // we don't disturb the board while a drag is in progress.
   useEffect(() => {
     setItems((prev) => {
       if (prev === tasks) return prev;
@@ -46,9 +57,6 @@ function KanbanBoardInner({
 
       const previousItems = items;
 
-      // Optimistically update local state synchronously.
-      // This renders ONLY KanbanBoard + affected columns,
-      // never the parent page, so the dnd portal stays intact.
       flushSync(() => {
         setItems((prev) =>
           prev.map((t) =>
@@ -57,7 +65,6 @@ function KanbanBoardInner({
         );
       });
 
-      // Fire the API call. On failure roll back to where we were.
       const promise = onTaskMove?.(taskId, destId);
       if (promise) {
         promise.catch(() => {
@@ -68,28 +75,28 @@ function KanbanBoardInner({
     [onTaskMove, statuses, items]
   );
 
-  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "");
   const columnStatuses = useMemo(
-    () =>
-      [
-        statuses.find((s) => normalize(s.name) === "todo") || statuses[0],
-        statuses.find((s) => normalize(s.name) === "doing") || statuses[1],
-        statuses.find((s) => normalize(s.name) === "done") || statuses[2]
-      ].filter(Boolean),
+    () => [...statuses].sort((a, b) => a.rank - b.rank),
     [statuses]
   );
 
+  // Group tasks by matching status NAME instead of status ID.
+  // This fixes the migration issue where tasks reference old status IDs.
   const grouped = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const s of statuses) {
       map.set(s.id, []);
     }
     for (const t of items) {
-      const list = map.get(t.status.id);
-      if (list) list.push(t);
+      // Try to match by the task's status name to the current user's statuses
+      const currentStatus = statusByName.get(normalizeName(t.status.name));
+      if (currentStatus) {
+        const list = map.get(currentStatus.id);
+        if (list) list.push(t);
+      }
     }
     return map;
-  }, [items, statuses]);
+  }, [items, statuses, statusByName]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
