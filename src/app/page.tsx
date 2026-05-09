@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Grid3X3, List, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle } from "lucide-react";
+import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,8 @@ import { TaskCard, TaskRow } from "@/components/TaskCard";
 import { NewTaskPanel } from "@/components/NewTaskPanel";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { ProjectTabs } from "@/components/ProjectTabs";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { TaskFilterView } from "@/components/TaskFilterView";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url);
@@ -25,7 +27,7 @@ export default function Home() {
   const [filters, setFilters] = useState<Filters>({});
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
-  const [taskView, setTaskView] = useState<"cards" | "lines">("lines");
+  const [taskView, setTaskView] = useState<"cards" | "lines" | "kanban" | "filter">("lines");
   const [viewingTrash, setViewingTrash] = useState(false);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
@@ -75,6 +77,21 @@ export default function Home() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
+  };
+
+  const handleTaskMove = async (taskId: string, newStatusId: string) => {
+    try {
+      const r = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ statusId: newStatusId })
+      });
+      if (r.ok) {
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+      }
+    } catch {
+      // silently fail; user can retry
+    }
   };
 
   const today = new Date();
@@ -228,6 +245,26 @@ export default function Home() {
                       >
                         <List size={16} />
                       </button>
+                      <button
+                        type="button"
+                        className="view-toggle-btn"
+                        data-active={taskView === "kanban"}
+                        onClick={() => setTaskView("kanban")}
+                        title="Kanban view"
+                        aria-label="Kanban view"
+                      >
+                        <Columns3 size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="view-toggle-btn"
+                        data-active={taskView === "filter"}
+                        onClick={() => setTaskView("filter")}
+                        title="Filter view"
+                        aria-label="Filter view"
+                      >
+                        <Filter size={15} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -243,7 +280,9 @@ export default function Home() {
                 </div>
               )}
 
-              {activeProject && <FilterBar filters={filters} setFilters={setFilters} opts={opts} />}
+              {activeProject && taskView !== "kanban" && taskView !== "filter" && (
+                <FilterBar filters={filters} setFilters={setFilters} opts={opts} />
+              )}
 
               {tasks.isLoading && (
                 <div className="text-ash eyebrow">Loading…</div>
@@ -276,6 +315,25 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+              )}
+
+              {tasks.data && taskView === "kanban" && (
+                <KanbanBoard
+                  tasks={tasks.data}
+                  statuses={opts.statuses}
+                  onTaskMove={handleTaskMove}
+                  onTaskClick={(t) => setSelected(t)}
+                  onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                />
+              )}
+
+              {tasks.data && taskView === "filter" && (
+                <TaskFilterView
+                  tasks={tasks.data}
+                  opts={opts}
+                  onTaskClick={(t) => setSelected(t)}
+                  onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                />
               )}
             </>
           )}
