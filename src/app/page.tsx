@@ -73,6 +73,32 @@ export default function Home() {
     }
   }, [me.data]);
 
+  // Handle deep-linking from notifications
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const urlProjectId = sp.get("projectId");
+    const urlTaskId = sp.get("taskId");
+
+    if (urlProjectId || urlTaskId) {
+      setViewingTrash(false);
+      setViewingArchive(false);
+    }
+
+    if (urlProjectId) {
+      setActiveProjectId(urlProjectId);
+    }
+
+    if (urlTaskId) {
+      fetchJson<Task>(`/api/tasks/${urlTaskId}`)
+        .then((task) => setSelected(task))
+        .catch(() => {});
+    }
+
+    if (urlProjectId || urlTaskId) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
     Object.entries(filters).forEach(([k, v]) => v && sp.set(k, v));

@@ -43,6 +43,7 @@ export type NotificationItem = {
   type: string;
   createdAt: string;
   taskId: Id | null;
+  projectId: Id | null;
 };
 
 export type UnreadNotifications = {

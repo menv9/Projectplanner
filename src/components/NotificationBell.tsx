@@ -1,9 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell, Check } from "lucide-react";
 import type { NotificationItem, UnreadNotifications } from "@/types";
 
 export function NotificationBell() {
+  const router = useRouter();
   const [data, setData] = useState<UnreadNotifications | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,29 @@ export function NotificationBell() {
     }
   };
 
+  const handleNavigate = async (n: NotificationItem) => {
+    if (!n.projectId || !n.taskId) {
+      // No navigation target — just mark as read
+      await markAsRead(n.id);
+      return;
+    }
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/notifications/${n.id}/mark-as-read`, { method: "POST" });
+      if (r.ok) {
+        setData((prev) => {
+          if (!prev) return prev;
+          const next = prev.notifications.filter((x) => x.id !== n.id);
+          return { count: Math.max(0, prev.count - 1), notifications: next };
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+    setOpen(false);
+    router.push(`/?projectId=${n.projectId}&taskId=${n.taskId}`);
+  };
+
   const count = data?.count ?? 0;
 
   return (
@@ -87,6 +112,7 @@ export function NotificationBell() {
                     key={n.id}
                     n={n}
                     onMark={() => markAsRead(n.id)}
+                    onNavigate={() => handleNavigate(n)}
                     loading={loading}
                   />
                 ))}
@@ -102,22 +128,31 @@ export function NotificationBell() {
 function NotificationRow({
   n,
   onMark,
+  onNavigate,
   loading
 }: {
   n: NotificationItem;
   onMark: () => void;
+  onNavigate: () => void;
   loading: boolean;
 }) {
   return (
-    <li className="flex items-start gap-3 px-4 py-3">
+    <li className="flex items-start gap-3 px-4 py-3 group">
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-ink leading-snug">{n.message}</p>
+        <button
+          className="text-sm text-ink leading-snug text-left w-full hover:underline"
+          onClick={onNavigate}
+          disabled={loading}
+          title={n.projectId && n.taskId ? "Open task" : "Mark as read"}
+        >
+          {n.message}
+        </button>
         <p className="text-[10px] text-ash mt-1">
           {new Date(n.createdAt).toLocaleString()}
         </p>
       </div>
       <button
-        className="btn-ghost shrink-0"
+        className="btn-ghost shrink-0 opacity-0 group-hover:opacity-100 transition"
         onClick={onMark}
         disabled={loading}
         title="Mark as read"

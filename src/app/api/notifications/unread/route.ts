@@ -10,7 +10,7 @@ export async function GET() {
     prisma.notification.count({
       where: { userId: auth.user.id, isRead: false }
     }),
-    prisma.notification.findMany({
+      prisma.notification.findMany({
       where: { userId: auth.user.id, isRead: false },
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -19,10 +19,20 @@ export async function GET() {
         message: true,
         type: true,
         createdAt: true,
-        taskId: true
+        taskId: true,
+        task: { select: { projectId: true } }
       }
     })
   ]);
 
-  return json({ count, notifications });
+  const mapped = notifications.map((n) => ({
+    id: n.id,
+    message: n.message,
+    type: n.type,
+    createdAt: n.createdAt,
+    taskId: n.taskId,
+    projectId: n.task?.projectId ?? null
+  }));
+
+  return json({ count, notifications: mapped });
 }
