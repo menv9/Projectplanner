@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Save, Sparkles, Trash2, X } from "lucide-react";
+import { Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
 
 type Opts = {
@@ -43,6 +43,7 @@ export function TaskDetailModal({
   const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!task) {
@@ -134,6 +135,17 @@ export function TaskDetailModal({
     }
   };
 
+  const copyPrompt = async () => {
+    if (!prompt) return;
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // silently fail
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
       <button
@@ -192,15 +204,28 @@ export function TaskDetailModal({
             <div className="block sm:col-span-2">
               <div className="flex items-center justify-between mb-1">
                 <span className="eyebrow">Suggested Prompt</span>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={generatePrompt}
-                  disabled={generating}
-                >
-                  <Sparkles size={13} className={generating ? "animate-pulse" : ""} />
-                  {generating ? "Generating…" : "Generate"}
-                </button>
+                <div className="flex items-center gap-2">
+                  {prompt && (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={copyPrompt}
+                      title="Copy to clipboard"
+                    >
+                      {copied ? <Check size={13} /> : <Copy size={13} />}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={generatePrompt}
+                    disabled={generating}
+                  >
+                    <Sparkles size={13} className={generating ? "animate-pulse" : ""} />
+                    {generating ? "Generating…" : "Generate"}
+                  </button>
+                </div>
               </div>
               <textarea
                 className="input min-h-[100px] !text-[14px]"
