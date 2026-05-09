@@ -37,12 +37,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{
           __html: `
             try {
-              var t = localStorage.getItem("theme");
-              if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-                document.documentElement.classList.add("dark");
-              }
               if (localStorage.getItem("erisTheme") === "true") {
                 document.documentElement.dataset.theme = "eris";
+                document.documentElement.classList.remove("dark");
+              } else {
+                var t = localStorage.getItem("theme");
+                if (t === "dark" || (!t && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                  document.documentElement.classList.add("dark");
+                }
               }
             } catch(e) {}
           `

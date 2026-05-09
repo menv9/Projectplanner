@@ -61,9 +61,14 @@ export default function Home() {
     if (me.data?.username?.toLowerCase() === "eris") {
       document.documentElement.dataset.theme = "eris";
       localStorage.setItem("erisTheme", "true");
+      document.documentElement.classList.remove("dark");
     } else if (me.data) {
       document.documentElement.dataset.theme = "";
       localStorage.removeItem("erisTheme");
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
     }
   }, [me.data]);
 
@@ -94,6 +99,10 @@ export default function Home() {
     await fetch("/api/auth/logout", { method: "POST" });
     localStorage.removeItem("erisTheme");
     document.documentElement.dataset.theme = "";
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      document.documentElement.classList.add("dark");
+    }
     router.push("/login");
     router.refresh();
   };
