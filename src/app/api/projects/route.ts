@@ -17,7 +17,11 @@ export async function GET() {
   const projects = await prisma.project.findMany({
     where: {
       OR: [
-        { teamId: null },
+        // Legacy public projects (no owner, no team)
+        { ownerId: null, teamId: null },
+        // Solo projects owned by current user
+        { ownerId: auth.user.id, teamId: null },
+        // Team projects the user is a member of
         { teamId: { in: teamIds } }
       ]
     },
@@ -32,6 +36,12 @@ export async function POST(req: NextRequest) {
   const p = Create.safeParse(await req.json().catch(() => ({})));
   if (!p.success) return bad("Invalid input");
   try {
-    return json(await prisma.project.create({ data: { name: p.data.name, color: p.data.color || null } }), { status: 201 });
+    return json(await prisma.project.create({
+      data: {
+        name: p.data.name,
+        color: p.data.color || null,
+        ownerId: auth.user.id
+      }
+    }), { status: 201 });
   } catch { return bad("Name already exists", 409); }
 }

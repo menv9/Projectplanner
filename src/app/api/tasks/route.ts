@@ -54,7 +54,11 @@ export async function GET(req: NextRequest) {
   const accessibleProjects = await prisma.project.findMany({
     where: {
       OR: [
-        { teamId: null },
+        // Legacy public projects (no owner, no team)
+        { ownerId: null, teamId: null },
+        // Solo projects owned by current user
+        { ownerId: auth.user.id, teamId: null },
+        // Team projects
         { teamId: { in: teamIds } }
       ]
     },
@@ -92,7 +96,14 @@ export async function POST(req: NextRequest) {
   // Verify the user can access the project
   const project = await prisma.project.findUnique({ where: { id: data.projectId } });
   if (!project) return bad("Project not found", 404);
-  if (project.teamId) {
+
+  if (!project.ownerId && !project.teamId) {
+    // Legacy public project — ok
+  } else if (project.ownerId && !project.teamId) {
+    if (project.ownerId !== auth.user.id) {
+      return bad("Project access denied", 403);
+    }
+  } else if (project.teamId) {
     const member = await prisma.teamMember.findUnique({
       where: { teamId_userId: { teamId: project.teamId, userId: auth.user.id } }
     });

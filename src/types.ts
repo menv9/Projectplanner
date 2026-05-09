@@ -1,6 +1,6 @@
 export type Id = string;
 export type Named = { id: Id; name: string; color?: string | null };
-export type Project = Named & { context?: string | null; teamId?: string | null };
+export type Project = Named & { context?: string | null; teamId?: string | null; ownerId?: string | null };
 export type Priority = Named & { rank: number };
 export type Status = Named & { rank: number };
 export type Category = Named;

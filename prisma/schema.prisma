@@ -44,7 +44,10 @@ model Project {
   context String? @db.Text
   teamId  String?
   team    Team?   @relation(fields: [teamId], references: [id])
+  ownerId String?
   tasks   Task[]
+
+  @@index([ownerId])
 }
 
 model Priority {

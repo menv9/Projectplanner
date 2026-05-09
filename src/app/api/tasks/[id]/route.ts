@@ -25,11 +25,26 @@ async function canAccessTask(taskId: string, userId: string) {
     include: { project: true }
   });
   if (!task) return { task: null, ok: false };
-  if (!task.project.teamId) return { task, ok: true };
-  const member = await prisma.teamMember.findUnique({
-    where: { teamId_userId: { teamId: task.project.teamId, userId } }
-  });
-  return { task, ok: !!member };
+
+  const project = task.project;
+
+  // Legacy public project (no owner, no team)
+  if (!project.ownerId && !project.teamId) return { task, ok: true };
+
+  // Solo project — only owner can access
+  if (project.ownerId && !project.teamId) {
+    return { task, ok: project.ownerId === userId };
+  }
+
+  // Team project — check membership
+  if (project.teamId) {
+    const member = await prisma.teamMember.findUnique({
+      where: { teamId_userId: { teamId: project.teamId, userId } }
+    });
+    return { task, ok: !!member };
+  }
+
+  return { task, ok: false };
 }
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -55,7 +70,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (d.projectId) {
     const newProject = await prisma.project.findUnique({ where: { id: d.projectId } });
     if (!newProject) return bad("Project not found", 404);
-    if (newProject.teamId) {
+
+    // Legacy public project
+    if (!newProject.ownerId && !newProject.teamId) {
+      // ok
+    } else if (newProject.ownerId && !newProject.teamId) {
+      if (newProject.ownerId !== auth.user.id) {
+        return bad("Project access denied", 403);
+      }
+    } else if (newProject.teamId) {
       const member = await prisma.teamMember.findUnique({
         where: { teamId_userId: { teamId: newProject.teamId, userId: auth.user.id } }
       });
