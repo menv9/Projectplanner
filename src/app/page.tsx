@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { Category, Filters, Priority, Project, Status, Task, User } from "@/types";
 import { FilterBar } from "@/components/FilterBar";
 import { TaskCard, TaskRow } from "@/components/TaskCard";
@@ -151,6 +152,7 @@ export default function Home() {
               <Trash2 size={14} />
               <span className="hidden sm:inline text-xs">{trashTasks.data?.length ?? 0}</span>
             </button>
+            <NotificationBell />
             <Link href="/settings" className="btn" title="Settings">
               <SettingsIcon size={14} />
             </Link>

@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  username   String   @unique
-  pinHash    String
-  createdAt  DateTime @default(now())
-  tasks      Task[]   @relation("Author")
-  teams      TeamMember[]
-  priorities Priority[]
-  statuses   Status[]
-  categories Category[]
+  id            String         @id @default(cuid())
+  username      String         @unique
+  pinHash       String
+  createdAt     DateTime       @default(now())
+  tasks         Task[]         @relation("Author")
+  teams         TeamMember[]
+  priorities    Priority[]
+  statuses      Status[]
+  categories    Category[]
+  notifications Notification[]
 }
 
 model Team {
@@ -93,24 +94,25 @@ model Category {
 }
 
 model Task {
-  id         String    @id @default(cuid())
-  title      String
-  notes      String?   @db.Text
-  dueDate    DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  projectId  String
-  project    Project   @relation(fields: [projectId], references: [id])
-  authorId   String
-  author     User      @relation("Author", fields: [authorId], references: [id])
-  priorityId String
-  priority   Priority  @relation(fields: [priorityId], references: [id])
-  statusId   String
-  status     Status    @relation(fields: [statusId], references: [id])
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
-  deletedAt   DateTime?
-  archivedAt  DateTime?
+  id            String         @id @default(cuid())
+  title         String
+  notes         String?        @db.Text
+  dueDate       DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id])
+  authorId      String
+  author        User           @relation("Author", fields: [authorId], references: [id])
+  priorityId    String
+  priority      Priority       @relation(fields: [priorityId], references: [id])
+  statusId      String
+  status        Status         @relation(fields: [statusId], references: [id])
+  categoryId    String?
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  deletedAt     DateTime?
+  archivedAt    DateTime?
+  notifications Notification[]
 
   @@index([projectId])
   @@index([deletedAt])
@@ -119,4 +121,21 @@ model Task {
   @@index([priorityId])
   @@index([authorId])
   @@index([categoryId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([isRead])
+  @@index([createdAt])
 }

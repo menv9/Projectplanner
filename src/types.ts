@@ -37,6 +37,19 @@ export type Task = {
   category: Category | null;
 };
 
+export type NotificationItem = {
+  id: Id;
+  message: string;
+  type: string;
+  createdAt: string;
+  taskId: Id | null;
+};
+
+export type UnreadNotifications = {
+  count: number;
+  notifications: NotificationItem[];
+};
+
 export type Filters = {
   projectId?: string;
   priorityId?: string;

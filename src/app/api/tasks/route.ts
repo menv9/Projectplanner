@@ -143,5 +143,35 @@ export async function POST(req: NextRequest) {
     },
     include: { project: true, priority: true, status: true, category: true, author: { select: { id: true, username: true } } }
   });
+
+  // Create notifications for relevant users
+  const authorId = data.authorId;
+  let notifyUserIds: string[] = [];
+
+  if (project.teamId) {
+    const members = await prisma.teamMember.findMany({
+      where: { teamId: project.teamId },
+      select: { userId: true }
+    });
+    notifyUserIds = members.map((m) => m.userId).filter((id) => id !== authorId);
+  } else if (project.ownerId && project.ownerId !== authorId) {
+    notifyUserIds = [project.ownerId];
+  } else if (!project.ownerId && !project.teamId) {
+    // Legacy public project — notify all other users
+    const allUsers = await prisma.user.findMany({ select: { id: true } });
+    notifyUserIds = allUsers.map((u) => u.id).filter((id) => id !== authorId);
+  }
+
+  if (notifyUserIds.length > 0) {
+    await prisma.notification.createMany({
+      data: notifyUserIds.map((userId) => ({
+        userId,
+        taskId: task.id,
+        message: `Nueva tarea '${task.title}' añadida`,
+        type: "TASK_CREATED"
+      }))
+    });
+  }
+
   return json(task, { status: 201 });
 }
