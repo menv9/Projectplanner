@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -79,7 +79,7 @@ export default function Home() {
     router.refresh();
   };
 
-  const handleTaskMove = async (taskId: string, newStatusId: string) => {
+  const handleTaskMove = useCallback(async (taskId: string, newStatusId: string) => {
     try {
       const r = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
@@ -92,7 +92,7 @@ export default function Home() {
     } catch {
       // silently fail; user can retry
     }
-  };
+  }, [qc]);
 
   const today = new Date();
 

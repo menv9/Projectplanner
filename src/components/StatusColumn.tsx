@@ -85,6 +85,7 @@ export function StatusColumn({
                       statuses={statuses}
                       onClick={() => onTaskClick?.(task)}
                       onUpdated={onUpdated}
+                      interactive={false}
                     />
                   </div>
                 )}

@@ -68,60 +68,77 @@ function StatusHoverTrigger({
   );
 }
 
-export function TaskCard({ task, statuses, onClick, onUpdated }: {
+export function TaskCard({ task, statuses, onClick, onUpdated, interactive = true }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
   onUpdated?: () => void;
+  interactive?: boolean;
 }) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
+
+  const body = (
+    <div className="relative z-[1] flex flex-col h-full gap-3">
+      <header className="flex items-start justify-end gap-3">
+        {due && (
+          <span className="numeral text-[11px] text-ash">
+            {format(due, "MMM dd").toUpperCase()}
+          </span>
+        )}
+      </header>
+
+      <h3 className="font-display text-[1.35rem] leading-[1.15] tracking-tightish text-ink line-clamp-3">
+        {task.title}
+      </h3>
+
+      {task.notes && (
+        <p className="text-[13.5px] text-ash leading-relaxed line-clamp-3">
+          {task.notes}
+        </p>
+      )}
+
+      <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          {task.category && (
+            <span className="chip">{task.category.name}</span>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="eyebrow flex items-center gap-1">
+            <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
+            {task.author.username}
+          </span>
+          <span className="eyebrow inline-flex items-center gap-1.5">
+            <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
+            {task.priority.name}
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
 
   return (
     <div className="relative w-full">
       <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
-      <button
-        onClick={onClick}
-        className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
-        style={{ borderRadius: 0 }}
-      >
-        <div className="relative z-[1] flex flex-col h-full gap-3">
-          <header className="flex items-start justify-end gap-3">
-            {due && (
-              <span className="numeral text-[11px] text-ash">
-                {format(due, "MMM dd").toUpperCase()}
-              </span>
-            )}
-          </header>
-
-          <h3 className="font-display text-[1.35rem] leading-[1.15] tracking-tightish text-ink line-clamp-3">
-            {task.title}
-          </h3>
-
-          {task.notes && (
-            <p className="text-[13.5px] text-ash leading-relaxed line-clamp-3">
-              {task.notes}
-            </p>
-          )}
-
-          <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              {task.category && (
-                <span className="chip">{task.category.name}</span>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <span className="eyebrow flex items-center gap-1">
-                <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
-                {task.author.username}
-              </span>
-              <span className="eyebrow inline-flex items-center gap-1.5">
-                <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
-                {task.priority.name}
-              </span>
-            </div>
-          </footer>
+      {interactive ? (
+        <button
+          onClick={onClick}
+          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
+          style={{ borderRadius: 0 }}
+        >
+          {body}
+        </button>
+      ) : (
+        <div
+          onClick={onClick}
+          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)]"
+          style={{ borderRadius: 0 }}
+          role="button"
+          tabIndex={0}
+        >
+          {body}
         </div>
-      </button>
+      )}
     </div>
   );
 }
