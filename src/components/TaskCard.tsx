@@ -47,7 +47,7 @@ function StatusHoverTrigger({
   return (
     <div className="absolute left-0 top-0 bottom-0 w-6 z-20 group/status cursor-pointer">
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        className="absolute left-0 top-0 bottom-0 w-[5px]"
         style={{ background: effectiveStatus.color || "transparent" }}
       />
       <div className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all duration-150 bg-paper border border-rule shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] rounded-md py-1 min-w-[150px] max-h-60 overflow-y-auto z-30">
