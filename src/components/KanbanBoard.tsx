@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
 
-export function KanbanBoard({
+function KanbanBoardInner({
   tasks,
   statuses,
   onTaskMove,
@@ -32,14 +32,27 @@ export function KanbanBoard({
   );
 
   const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "");
-  const columnStatuses = [
-    statuses.find((s) => normalize(s.name) === "todo") || statuses[0],
-    statuses.find((s) => normalize(s.name) === "doing") || statuses[1],
-    statuses.find((s) => normalize(s.name) === "done") || statuses[2]
-  ].filter(Boolean);
+  const columnStatuses = useMemo(
+    () =>
+      [
+        statuses.find((s) => normalize(s.name) === "todo") || statuses[0],
+        statuses.find((s) => normalize(s.name) === "doing") || statuses[1],
+        statuses.find((s) => normalize(s.name) === "done") || statuses[2]
+      ].filter(Boolean),
+    [statuses]
+  );
 
-  const tasksByStatus = (statusId: string) =>
-    tasks.filter((t) => t.status.id === statusId);
+  const grouped = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const s of statuses) {
+      map.set(s.id, []);
+    }
+    for (const t of tasks) {
+      const list = map.get(t.status.id);
+      if (list) list.push(t);
+    }
+    return map;
+  }, [tasks, statuses]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -53,7 +66,7 @@ export function KanbanBoard({
             <div className="relative z-[1] flex flex-col h-full">
               <StatusColumn
                 status={status}
-                tasks={tasksByStatus(status.id)}
+                tasks={grouped.get(status.id) || []}
                 statuses={statuses}
                 onTaskClick={onTaskClick}
                 onUpdated={onUpdated}
@@ -65,3 +78,5 @@ export function KanbanBoard({
     </DragDropContext>
   );
 }
+
+export const KanbanBoard = memo(KanbanBoardInner);

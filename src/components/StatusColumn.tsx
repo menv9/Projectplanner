@@ -46,9 +46,9 @@ export function StatusColumn({
 
       <div className="mb-3">
         <label className="relative block">
-          <Search size={13} className="absolute left-3 inset-y-0 my-auto text-dust pointer-events-none" />
+          <Search size={13} className="absolute right-3 inset-y-0 my-auto text-dust pointer-events-none" />
           <input
-            className="input pl-8 pr-3 py-2 text-sm w-full"
+            className="input pl-3 pr-8 py-2 text-sm w-full"
             placeholder="Filter tasks…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
