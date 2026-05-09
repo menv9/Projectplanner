@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, FileText, Trash2, X, Users, Plus, UserPlus, UserX } from "lucide-react";
+import { ArrowLeft, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
 import type { Category, Priority, Project, Status, Team, User } from "@/types";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
@@ -302,6 +302,8 @@ function TeamsSection() {
   const [error, setError] = useState<string | null>(null);
   const [addingMember, setAddingMember] = useState<string | null>(null);
   const [memberName, setMemberName] = useState("");
+  const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const add = async () => {
     setError(null);
@@ -348,6 +350,19 @@ function TeamsSection() {
     qc.invalidateQueries({ queryKey: ["teams"] });
   };
 
+  const rename = async (teamId: string) => {
+    if (!editName.trim()) return;
+    const res = await fetch(`/api/teams/${teamId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: editName.trim() })
+    });
+    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    setEditingTeam(null);
+    setEditName("");
+    qc.invalidateQueries({ queryKey: ["teams"] });
+  };
+
   return (
     <section className="bg-cream/60 border border-rule rounded-md overflow-hidden">
       <header className="px-6 pt-5 pb-4 border-b border-rule">
@@ -372,14 +387,37 @@ function TeamsSection() {
           <li className="px-6 py-6 text-sm text-ash">No teams yet.</li>
         )}
         {teams.data?.map((team) => (
-          <li key={team.id} className="px-6 py-4">
+          <li key={team.id} className="px-6 py-4 group">
             <div className="flex items-center justify-between gap-3 mb-3">
-              <div>
-                <span className="font-display text-[1.05rem]">{team.name}</span>
-                <span className="chip ml-2 text-[9px]">{team.role}</span>
-              </div>
+              {editingTeam === team.id ? (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <input
+                    className="input py-1.5 text-sm flex-1 min-w-0"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") rename(team.id); if (e.key === "Escape") { setEditingTeam(null); setEditName(""); } }}
+                    autoFocus
+                  />
+                  <button className="btn-primary !py-1.5 !px-2" onClick={() => rename(team.id)}><Check size={13} /></button>
+                  <button className="btn-ghost" onClick={() => { setEditingTeam(null); setEditName(""); }}><X size={13} /></button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-display text-[1.05rem] truncate">{team.name}</span>
+                  <span className="chip text-[9px]">{team.role}</span>
+                  {team.role === "admin" && (
+                    <button
+                      className="btn-ghost opacity-60 hover:opacity-100 transition"
+                      onClick={() => { setEditingTeam(team.id); setEditName(team.name); }}
+                      title="Rename"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
               {team.role === "admin" && (
-                <button className="btn-ghost text-vermilion" onClick={() => del(team.id)}>
+                <button className="btn-ghost text-vermilion shrink-0" onClick={() => del(team.id)}>
                   <Trash2 size={13} /> Delete
                 </button>
               )}
