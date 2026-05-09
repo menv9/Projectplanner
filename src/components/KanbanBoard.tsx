@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Status, Task } from "@/types";
@@ -19,6 +19,20 @@ function KanbanBoardInner({
   onTaskClick?: (task: Task) => void;
   onUpdated?: () => void;
 }) {
+  const [items, setItems] = useState(tasks);
+
+  // Sync from server when the parent query returns fresh data.
+  // We only swap when the task IDs or order actually differ so
+  // we don't disturb the board while a drag is in progress.
+  useEffect(() => {
+    setItems((prev) => {
+      if (prev === tasks) return prev;
+      if (prev.length !== tasks.length) return tasks;
+      const sameOrder = prev.every((t, i) => t.id === tasks[i].id);
+      return sameOrder ? prev : tasks;
+    });
+  }, [tasks]);
+
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!result.destination) return;
@@ -27,13 +41,31 @@ function KanbanBoardInner({
       if (sourceId === destId) return;
 
       const taskId = result.draggableId;
-      // Force synchronous React flush so the DOM updates before the drag library
-      // finishes its drop animation. Prevents React 18 batching flicker.
+      const newStatus = statuses.find((s) => s.id === destId);
+      if (!newStatus) return;
+
+      const previousItems = items;
+
+      // Optimistically update local state synchronously.
+      // This renders ONLY KanbanBoard + affected columns,
+      // never the parent page, so the dnd portal stays intact.
       flushSync(() => {
-        onTaskMove?.(taskId, destId);
+        setItems((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, status: newStatus } : t
+          )
+        );
       });
+
+      // Fire the API call. On failure roll back to where we were.
+      const promise = onTaskMove?.(taskId, destId);
+      if (promise) {
+        promise.catch(() => {
+          setItems(previousItems);
+        });
+      }
     },
-    [onTaskMove]
+    [onTaskMove, statuses, items]
   );
 
   const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "");
@@ -52,12 +84,12 @@ function KanbanBoardInner({
     for (const s of statuses) {
       map.set(s.id, []);
     }
-    for (const t of tasks) {
+    for (const t of items) {
       const list = map.get(t.status.id);
       if (list) list.push(t);
     }
     return map;
-  }, [tasks, statuses]);
+  }, [items, statuses]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>

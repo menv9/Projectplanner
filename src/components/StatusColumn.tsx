@@ -99,4 +99,8 @@ function StatusColumnInner({
   );
 }
 
-export const StatusColumn = memo(StatusColumnInner);
+export const StatusColumn = memo(StatusColumnInner, (prev, next) => {
+  if (prev.status.id !== next.status.id) return false;
+  if (prev.tasks.length !== next.tasks.length) return false;
+  return prev.tasks.every((t, i) => t.id === next.tasks[i].id);
+});

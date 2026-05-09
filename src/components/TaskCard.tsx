@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
 
@@ -68,7 +68,7 @@ function StatusHoverTrigger({
   );
 }
 
-export function TaskCard({ task, statuses, onClick, onUpdated, interactive = true }: {
+function TaskCardInner({ task, statuses, onClick, onUpdated, interactive = true }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
@@ -143,7 +143,7 @@ export function TaskCard({ task, statuses, onClick, onUpdated, interactive = tru
   );
 }
 
-export function TaskRow({ task, statuses, onClick, onUpdated }: {
+function TaskRowInner({ task, statuses, onClick, onUpdated }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
@@ -194,3 +194,6 @@ export function TaskRow({ task, statuses, onClick, onUpdated }: {
     </div>
   );
 }
+
+export const TaskCard = memo(TaskCardInner);
+export const TaskRow = memo(TaskRowInner);
