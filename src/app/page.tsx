@@ -80,19 +80,27 @@ export default function Home() {
   };
 
   const handleTaskMove = useCallback(async (taskId: string, newStatusId: string) => {
+    const queryKey = ["tasks", queryString];
+    const previous = qc.getQueryData<Task[]>(queryKey);
+    const newStatus = opts.statuses.find((s) => s.id === newStatusId);
+    if (!previous || !newStatus) return;
+
+    const next = previous.map((t) =>
+      t.id === taskId ? { ...t, status: newStatus } : t
+    );
+    qc.setQueryData(queryKey, next);
+
     try {
       const r = await fetch(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ statusId: newStatusId })
       });
-      if (r.ok) {
-        qc.invalidateQueries({ queryKey: ["tasks"] });
-      }
+      if (!r.ok) throw new Error();
     } catch {
-      // silently fail; user can retry
+      qc.setQueryData(queryKey, previous);
     }
-  }, [qc]);
+  }, [qc, queryString, opts.statuses]);
 
   const today = new Date();
 
