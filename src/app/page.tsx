@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X } from "lucide-react";
+import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Task | null>(null);
   const [taskView, setTaskView] = useState<"cards" | "lines" | "kanban" | "filter">("lines");
   const [viewingTrash, setViewingTrash] = useState(false);
+  const [viewingArchive, setViewingArchive] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
@@ -40,6 +41,11 @@ export default function Home() {
   const trashTasks = useQuery({
     queryKey: ["trash"],
     queryFn: () => fetchJson<Task[]>("/api/trash")
+  });
+  const archivedTasks = useQuery({
+    queryKey: ["tasks", "archived", activeProjectId],
+    enabled: !!activeProjectId,
+    queryFn: () => fetchJson<Task[]>(`/api/tasks?archived=true&projectId=${activeProjectId}`)
   });
 
   useEffect(() => {
@@ -90,6 +96,17 @@ export default function Home() {
     qc.invalidateQueries({ queryKey: ["tasks"] });
   }, [qc]);
 
+  const handleArchive = useCallback(async (taskId: string, archive: boolean) => {
+    const r = await fetch(`/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ archived: archive })
+    });
+    if (!r.ok) return;
+    qc.invalidateQueries({ queryKey: ["tasks"] });
+    qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
+  }, [qc]);
+
   const today = new Date();
 
   return (
@@ -111,7 +128,10 @@ export default function Home() {
                 <div className="font-display italic text-[1.05rem] leading-tight">{me.data.username}</div>
               </div>
             )}
-            <button className={viewingTrash ? "btn-primary" : "btn"} onClick={() => setViewingTrash(!viewingTrash)} title="Trash">
+            <button className={viewingArchive ? "btn-primary" : "btn"} onClick={() => { setViewingArchive(!viewingArchive); setViewingTrash(false); }} title="Archive">
+              <Archive size={14} /> <span className="hidden sm:inline">{archivedTasks.data?.length ?? 0}</span>
+            </button>
+            <button className={viewingTrash ? "btn-primary" : "btn"} onClick={() => { setViewingTrash(!viewingTrash); setViewingArchive(false); }} title="Trash">
               <Trash2 size={14} /> <span className="hidden sm:inline">{trashTasks.data?.length ?? 0}</span>
             </button>
             <Link href="/settings" className="btn" title="Settings">
@@ -204,6 +224,47 @@ export default function Home() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          ) : viewingArchive ? (
+            <div>
+              <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
+                <div>
+                  <div className="eyebrow mb-1">Archive</div>
+                  <h2 className="font-display text-[1.8rem] sm:text-[2.6rem] leading-[0.95] tracking-tightish">
+                    {archivedTasks.data?.length ?? 0} items
+                  </h2>
+                </div>
+                <button type="button" className="btn-ghost" onClick={() => setViewingArchive(false)}>
+                  <RotateCcw size={14} /> <span className="hidden sm:inline">Back</span>
+                </button>
+              </div>
+
+              {archivedTasks.isLoading && <div className="text-ash eyebrow">Loading…</div>}
+
+              {archivedTasks.data && archivedTasks.data.length === 0 && (
+                <div className="paper-card p-8 sm:p-12 text-center">
+                  <div className="relative z-[1]">
+                    <span className="eyebrow">Empty archive</span>
+                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No archived tasks.</p>
+                  </div>
+                </div>
+              )}
+
+              {archivedTasks.data && archivedTasks.data.length > 0 && (
+                <div className="space-y-2">
+                  {archivedTasks.data.map((t) => (
+                    <div key={t.id} className="rise-in relative hover:z-10">
+                      <TaskRow
+                        task={t}
+                        statuses={opts.statuses}
+                        onClick={() => setSelected(t)}
+                        onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                        onArchive={handleArchive}
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -404,6 +465,11 @@ export default function Home() {
         onSaved={(task) => {
           setSelected(task);
           qc.invalidateQueries({ queryKey: ["tasks"] });
+        }}
+        onArchive={(task) => {
+          setSelected(null);
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+          qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
         }}
       />
     </div>

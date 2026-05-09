@@ -2,6 +2,7 @@
 import { memo, useEffect, useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
+import { Archive, ArchiveRestore } from "lucide-react";
 
 function StatusHoverTrigger({
   task,
@@ -68,18 +69,29 @@ function StatusHoverTrigger({
   );
 }
 
-function TaskCardInner({ task, statuses, onClick, onUpdated, interactive = true }: {
+function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interactive = true }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
   onUpdated?: () => void;
+  onArchive?: (taskId: string, archive: boolean) => void;
   interactive?: boolean;
 }) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
   const body = (
     <div className="relative z-[1] flex flex-col h-full gap-3">
-      <header className="flex items-start justify-end gap-3">
+      <header className="flex items-start justify-between gap-3">
+        {onArchive && (
+          <button
+            type="button"
+            className="text-ash hover:text-ink transition"
+            title={task.archivedAt ? "Unarchive" : "Archive"}
+            onClick={(e) => { e.stopPropagation(); onArchive(task.id, !task.archivedAt); }}
+          >
+            {task.archivedAt ? <ArchiveRestore size={13} /> : <Archive size={13} />}
+          </button>
+        )}
         {due && (
           <span className="numeral text-[11px] text-ash">
             {format(due, "MMM dd").toUpperCase()}
@@ -143,11 +155,12 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, interactive = true 
   );
 }
 
-function TaskRowInner({ task, statuses, onClick, onUpdated }: {
+function TaskRowInner({ task, statuses, onClick, onUpdated, onArchive }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
   onUpdated?: () => void;
+  onArchive?: (taskId: string, archive: boolean) => void;
 }) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
@@ -175,11 +188,23 @@ function TaskRowInner({ task, statuses, onClick, onUpdated }: {
           </div>
 
           <div className="flex flex-col items-end gap-1 md:justify-center">
-            {due && (
-              <span className="numeral text-[11px] text-ash">
-                {format(due, "MMM dd").toUpperCase()}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {onArchive && (
+                <button
+                  type="button"
+                  className="text-ash hover:text-ink transition"
+                  title={task.archivedAt ? "Unarchive" : "Archive"}
+                  onClick={(e) => { e.stopPropagation(); onArchive(task.id, !task.archivedAt); }}
+                >
+                  {task.archivedAt ? <ArchiveRestore size={12} /> : <Archive size={12} />}
+                </button>
+              )}
+              {due && (
+                <span className="numeral text-[11px] text-ash">
+                  {format(due, "MMM dd").toUpperCase()}
+                </span>
+              )}
+            </div>
             <span className="eyebrow flex items-center gap-1">
               <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
               {task.author.username}

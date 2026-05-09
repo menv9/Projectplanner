@@ -36,6 +36,14 @@ export async function GET(req: NextRequest) {
     if (to) (where.dueDate as Prisma.DateTimeFilter).lte = new Date(to);
   }
   where.deletedAt = null;
+
+  const archived = sp.get("archived");
+  if (archived === "true") {
+    where.archivedAt = { not: null };
+  } else if (archived !== "include") {
+    where.archivedAt = null;
+  }
+
   const q = sp.get("q");
   if (q) {
     where.OR = [

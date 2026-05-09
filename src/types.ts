@@ -29,6 +29,7 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  archivedAt: string | null;
   project: Project;
   author: User;
   priority: Priority;

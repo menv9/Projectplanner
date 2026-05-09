@@ -11,7 +11,8 @@ const Patch = z.object({
   authorId: z.string().optional(),
   priorityId: z.string().optional(),
   statusId: z.string().optional(),
-  categoryId: z.string().nullable().optional()
+  categoryId: z.string().nullable().optional(),
+  archived: z.boolean().optional()
 });
 
 const include = {
@@ -96,7 +97,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(d.authorId !== undefined && { authorId: d.authorId }),
       ...(d.priorityId !== undefined && { priorityId: d.priorityId }),
       ...(d.statusId !== undefined && { statusId: d.statusId }),
-      ...(d.categoryId !== undefined && { categoryId: d.categoryId })
+      ...(d.categoryId !== undefined && { categoryId: d.categoryId }),
+      ...(d.archived !== undefined && { archivedAt: d.archived ? new Date() : null })
     },
     include
   });

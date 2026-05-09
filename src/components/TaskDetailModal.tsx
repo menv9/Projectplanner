@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
 
 type Opts = {
@@ -29,13 +29,14 @@ const toDateInput = (date: string | null) => {
 };
 
 export function TaskDetailModal({
-  task, opts, onOpenChange, onDeleted, onSaved
+  task, opts, onOpenChange, onDeleted, onSaved, onArchive
 }: {
   task: Task | null;
   opts: Opts;
   onOpenChange: (v: boolean) => void;
   onDeleted: () => void;
   onSaved: (task: Task) => void;
+  onArchive: (task: Task) => void;
 }) {
   const [form, setForm] = useState<Form | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,6 +116,28 @@ export function TaskDetailModal({
       close();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not delete task");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const archive = async () => {
+    const restoring = !!task.archivedAt;
+    if (!confirm(restoring ? "Restore this task from the archive?" : "Archive this task?")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ archived: !restoring })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update task");
+      onArchive(data as Task);
+      close();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not update task");
     } finally {
       setBusy(false);
     }
@@ -244,6 +267,10 @@ export function TaskDetailModal({
           </span>
           <div className="flex flex-wrap items-center gap-2">
             {error && <span className="eyebrow text-vermilion">{error}</span>}
+            <button type="button" className="btn" onClick={archive} disabled={busy}>
+              {task.archivedAt ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+              {task.archivedAt ? "Unarchive" : "Archive"}
+            </button>
             <button type="button" className="btn" onClick={remove} disabled={busy}>
               <Trash2 size={14} /> Delete
             </button>
