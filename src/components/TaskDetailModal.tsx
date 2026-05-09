@@ -182,13 +182,12 @@ export function TaskDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-editor-title"
-        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] flex flex-col shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
-        style={{ borderRadius: 0 }}
+        className="paper-card relative z-[1] w-full max-w-3xl max-h-[92vh] flex flex-col shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)]"
       >
         <div className="relative z-[1] flex items-start justify-between gap-4 border-b border-rule px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <div className="eyebrow mb-1">Edit task</div>
-            <h2 id="task-editor-title" className="font-display text-[1.7rem] leading-[1.1] tracking-tightish break-words">
+            <span className="text-[11px] text-ash tracking-wide block mb-1">Edit task</span>
+            <h2 id="task-editor-title" className="font-display text-[1.5rem] leading-[1.1] tracking-tightish break-words">
               {task.title}
             </h2>
           </div>
@@ -200,7 +199,7 @@ export function TaskDetailModal({
         <div className="relative z-[1] flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">
-              <span className="eyebrow block mb-1">Title</span>
+              <span className="text-[11px] text-ash block mb-1">Title</span>
               <input className="input !text-[15px]" value={form.title} onChange={(e) => set("title", e.target.value)} />
             </label>
 
@@ -211,12 +210,12 @@ export function TaskDetailModal({
             <Select label="Category" value={form.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} emptyLabel="None" />
 
             <label className="block">
-              <span className="eyebrow block mb-1">Due</span>
+              <span className="text-[11px] text-ash block mb-1">Due</span>
               <input type="date" className="input" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
             </label>
 
             <label className="block sm:col-span-2">
-              <span className="eyebrow block mb-1">Notes</span>
+              <span className="text-[11px] text-ash block mb-1">Notes</span>
               <textarea
                 className="input min-h-[180px] !text-[14px]"
                 value={form.notes}
@@ -226,7 +225,7 @@ export function TaskDetailModal({
 
             <div className="block sm:col-span-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="eyebrow">Suggested Prompt</span>
+                <span className="text-[11px] text-ash tracking-wide">Suggested Prompt</span>
                 <div className="flex items-center gap-2">
                   {prompt && (
                     <button
@@ -262,11 +261,11 @@ export function TaskDetailModal({
         </div>
 
         <footer className="relative z-[1] flex flex-wrap items-center justify-between gap-3 border-t border-rule bg-cream/40 px-5 py-3 sm:px-6">
-          <span className="eyebrow">
-            Created {format(new Date(task.createdAt), "PP")} - last edit {format(new Date(task.updatedAt), "PP")}
+          <span className="text-[11px] text-ash tracking-wide">
+            Created {format(new Date(task.createdAt), "PP")} · last edit {format(new Date(task.updatedAt), "PP")}
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            {error && <span className="eyebrow text-vermilion">{error}</span>}
+            {error && <span className="text-[11px] text-vermilion tracking-wide">{error}</span>}
             <button type="button" className="btn" onClick={archive} disabled={busy}>
               {task.archivedAt ? <ArchiveRestore size={14} /> : <Archive size={14} />}
               {task.archivedAt ? "Unarchive" : "Archive"}
@@ -293,7 +292,7 @@ function StatusPills({
 }) {
   return (
     <div className="block min-w-0 sm:col-span-2">
-      <span className="eyebrow block mb-2">Status</span>
+      <span className="text-[11px] text-ash block mb-2">Status</span>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const active = option.id === value;
@@ -326,7 +325,7 @@ function Select({
 }) {
   return (
     <label className="block min-w-0">
-      <span className="eyebrow block mb-1">{label}</span>
+      <span className="text-[11px] text-ash block mb-1">{label}</span>
       <select className="input" value={value} onChange={(e) => onChange(e.target.value)}>
         {emptyLabel && <option value="">{emptyLabel}</option>}
         {options.map((option) => (

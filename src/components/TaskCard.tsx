@@ -115,12 +115,12 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interact
             <span className="chip">{task.category.name}</span>
           )}
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="eyebrow flex items-center gap-1">
+        <div className="flex flex-col items-end gap-1 text-[12px] text-ash">
+          <span className="flex items-center gap-1">
             <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
             {task.author.username}
           </span>
-          <span className="eyebrow inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5">
             <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
             {task.priority.name}
           </span>
@@ -135,16 +135,14 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interact
       {interactive ? (
         <button
           onClick={onClick}
-          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)] focus:outline-none focus:ring-2 focus:ring-black/20"
-          style={{ borderRadius: 0 }}
+          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)] focus:outline-none focus:ring-2 focus:ring-black/10"
         >
           {body}
         </button>
       ) : (
         <div
           onClick={onClick}
-          className="paper-card text-left p-5 pl-6 w-full hover:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.25)]"
-          style={{ borderRadius: 0 }}
+          className="paper-card text-left p-5 pl-6 w-full hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)]"
           role="button"
           tabIndex={0}
         >
@@ -169,8 +167,7 @@ function TaskRowInner({ task, statuses, onClick, onUpdated, onArchive }: {
       <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
       <button
         onClick={onClick}
-        className="paper-card text-left px-3 py-2 pl-5 w-full transition hover:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-black/20"
-        style={{ borderRadius: 0 }}
+        className="paper-card text-left px-3 py-2 pl-5 w-full transition hover:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.16)] focus:outline-none focus:ring-2 focus:ring-black/10"
       >
         <div className="relative z-[1] grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-2 md:items-center">
           <div className="min-w-0">
@@ -205,11 +202,11 @@ function TaskRowInner({ task, statuses, onClick, onUpdated, onArchive }: {
                 </span>
               )}
             </div>
-            <span className="eyebrow flex items-center gap-1">
+            <span className="text-[12px] text-ash flex items-center gap-1">
               <span className="display-italic text-[13px] text-vermilion translate-y-[1px]">@</span>
               {task.author.username}
             </span>
-            <span className="eyebrow inline-flex items-center gap-1.5">
+            <span className="text-[12px] text-ash inline-flex items-center gap-1.5">
               <span className="dot" style={{ background: task.priority.color || "#5a5247" }} />
               {task.priority.name}
             </span>

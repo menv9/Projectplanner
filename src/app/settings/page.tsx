@@ -15,14 +15,14 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm">
-        <div className="max-w-[1100px] mx-auto px-8 py-6 flex items-end justify-between gap-6">
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-8 py-5 flex items-end justify-between gap-6">
           <div>
-            <div className="eyebrow mb-1">Appendix · Configuration</div>
-            <h1 className="font-display text-[2.6rem] leading-[0.95] tracking-tightish">
+            <span className="text-[11px] text-ash tracking-wide block mb-1">Appendix · Configuration</span>
+            <h1 className="font-display text-[2.2rem] leading-[0.95] tracking-tightish">
               <span className="display-italic text-vermilion">Settings</span>
             </h1>
           </div>
-          <Link href="/" className="btn"><ArrowLeft size={14} /> Back to atelier</Link>
+          <Link href="/" className="btn"><ArrowLeft size={14} /> Back</Link>
         </div>
       </header>
 
@@ -106,68 +106,65 @@ function ProjectsSection() {
   const adminTeamIds = new Set(teams.data?.filter((t) => t.role === "admin").map((t) => t.id) || []);
 
   return (
-    <section className="paper-card">
-      <div className="relative z-[1]">
-        <header className="px-6 pt-5 pb-4 border-b border-rule">
-          <div className="flex items-baseline gap-3 mb-1">
-            <span className="numeral text-vermilion text-[12px]">01</span>
-            <span className="hairline flex-1 translate-y-[-3px]" />
-          </div>
-          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Projects</h2>
-          <p className="text-sm text-ash mt-1 italic">Each project becomes its own tab on the workshop floor.</p>
-        </header>
-
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="block">
-              <span className="eyebrow block mb-1">Project name</span>
-              <input className="input" placeholder="Project name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-            </label>
-            <label className="block">
-              <span className="eyebrow block mb-1">Color</span>
-              <input className="input" type="color" value={draft.color} onChange={(e) => setDraft({ ...draft, color: e.target.value })} />
-            </label>
-          </div>
-          <button className="btn-primary md:self-end" onClick={add}>Add entry</button>
-          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+    <section className="bg-cream/60 border border-rule rounded-md overflow-hidden">
+      <header className="px-6 pt-5 pb-4 border-b border-rule">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="numeral text-vermilion text-[11px]">01</span>
+          <h2 className="font-display text-[1.5rem] leading-[1.05] tracking-tightish">Projects</h2>
         </div>
+        <p className="text-sm text-ash">Each project becomes its own tab on the workshop floor.</p>
+      </header>
 
-        <ul className="divide-y divide-rule">
-          {projects.data?.length === 0 && (
-            <li className="px-6 py-6 text-sm text-ash italic">Nothing here yet.</li>
-          )}
-          {projects.data?.map((it) => (
-            <li key={it.id}>
-              <div className="px-6 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule flex-shrink-0" style={{ background: it.color }} />}
-                  <span className="font-display text-[1.05rem] truncate">{it.name}</span>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {teams.data && teams.data.length > 0 && (
-                    <select
-                      className="input py-1.5 text-xs"
-                      value={it.teamId || ""}
-                      onChange={(e) => assignTeam(it.id, e.target.value || null)}
-                      disabled={it.teamId ? !adminTeamIds.has(it.teamId) : false}
-                    >
-                      <option value="">No team</option>
-                      {teams.data
-                        .filter((t) => !it.teamId || adminTeamIds.has(t.id) || t.id === it.teamId)
-                        .map((t) => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                    </select>
-                  )}
-                  <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
-                    <Trash2 size={13} /> Remove
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="block">
+            <span className="text-[11px] text-ash block mb-1">Project name</span>
+            <input className="input" placeholder="Project name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          </label>
+          <label className="block">
+            <span className="text-[11px] text-ash block mb-1">Color</span>
+            <input className="input" type="color" value={draft.color} onChange={(e) => setDraft({ ...draft, color: e.target.value })} />
+          </label>
+        </div>
+        <button className="btn-primary md:self-end" onClick={add}>Add entry</button>
+        {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
       </div>
+
+      <ul className="divide-y divide-rule">
+        {projects.data?.length === 0 && (
+          <li className="px-6 py-6 text-sm text-ash">Nothing here yet.</li>
+        )}
+        {projects.data?.map((it) => (
+          <li key={it.id}>
+            <div className="px-6 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule flex-shrink-0" style={{ background: it.color }} />}
+                <span className="font-display text-[1.05rem] truncate">{it.name}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {teams.data && teams.data.length > 0 && (
+                  <select
+                    className="input py-1.5 text-xs"
+                    value={it.teamId || ""}
+                    onChange={(e) => assignTeam(it.id, e.target.value || null)}
+                    disabled={it.teamId ? !adminTeamIds.has(it.teamId) : false}
+                  >
+                    <option value="">No team</option>
+                    {teams.data
+                      .filter((t) => !it.teamId || adminTeamIds.has(t.id) || t.id === it.teamId)
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                  </select>
+                )}
+                <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
+                  <Trash2 size={13} /> Remove
+                </button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -217,81 +214,78 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
   };
 
   return (
-    <section className="paper-card">
-      <div className="relative z-[1]">
-        <header className="px-6 pt-5 pb-4 border-b border-rule">
-          <div className="flex items-baseline gap-3 mb-1">
-            <span className="numeral text-vermilion text-[12px]">{n}</span>
-            <span className="hairline flex-1 translate-y-[-3px]" />
-          </div>
-          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">{title}</h2>
-          <p className="text-sm text-ash mt-1 italic">{subtitle}</p>
-        </header>
-
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {fields.map((f) => (
-              <label key={f.name} className="block">
-                <span className="eyebrow block mb-1">{f.placeholder}</span>
-                <input
-                  className="input"
-                  type={f.type === "color" ? "color" : (f.type || "text")}
-                  value={draft[f.name] || ""}
-                  onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })}
-                />
-              </label>
-            ))}
-          </div>
-          <button className="btn-primary md:self-end" onClick={add}>Add entry</button>
-          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+    <section className="bg-cream/60 border border-rule rounded-md overflow-hidden">
+      <header className="px-6 pt-5 pb-4 border-b border-rule">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="numeral text-vermilion text-[11px]">{n}</span>
+          <h2 className="font-display text-[1.5rem] leading-[1.05] tracking-tightish">{title}</h2>
         </div>
+        <p className="text-sm text-ash">{subtitle}</p>
+      </header>
 
-        <ul className="divide-y divide-rule">
-          {q.data?.length === 0 && (
-            <li className="px-6 py-6 text-sm text-ash italic">Nothing here yet.</li>
-          )}
-          {q.data?.map((it) => (
-            <li key={it.id}>
-              {editingContext === it.id ? (
-                <div className="px-6 py-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display text-[1.05rem]">{it.name} — Context</span>
-                    <div className="flex gap-2">
-                      <button className="btn-primary !py-1 !px-3 text-xs" onClick={saveContext}>Save</button>
-                      <button className="btn-ghost" onClick={() => setEditingContext(null)}><X size={13} /></button>
-                    </div>
-                  </div>
-                  <textarea
-                    className="input min-h-[120px] !text-[13px]"
-                    placeholder={`## Project stack\nNext.js 14, Tailwind, Prisma, PostgreSQL\n\n## Structure\nsrc/ — all source\nprisma/ — schema & migrations\n\n## Conventions\n- RSC by default, 'use client' when needed\n- Tailwind for styling\n- Zod for validation`}
-                    value={contextDraft}
-                    onChange={(e) => setContextDraft(e.target.value)}
-                  />
-                </div>
-              ) : (
-                <div className="px-6 py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule" style={{ background: it.color }} />}
-                    <span className="font-display text-[1.05rem]">{it.name}</span>
-                    {"rank" in it && it.rank != null && <span className="numeral text-[11px] text-dust">rank {it.rank}</span>}
-                    {"context" in it && it.context && <span className="chip !py-0 !px-1.5 text-[9px]"><FileText size={10} /></span>}
-                  </div>
-                  <div className="flex gap-1">
-                    {"context" in it && (
-                      <button className="btn-ghost" onClick={() => { setEditingContext(it.id); setContextDraft((it as any).context || ""); }}>
-                        <FileText size={13} /> Context
-                      </button>
-                    )}
-                    <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
-                      <Trash2 size={13} /> Remove
-                    </button>
-                  </div>
-                </div>
-              )}
-            </li>
+      <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          {fields.map((f) => (
+            <label key={f.name} className="block">
+              <span className="text-[11px] text-ash block mb-1">{f.placeholder}</span>
+              <input
+                className="input"
+                type={f.type === "color" ? "color" : (f.type || "text")}
+                value={draft[f.name] || ""}
+                onChange={(e) => setDraft({ ...draft, [f.name]: e.target.value })}
+              />
+            </label>
           ))}
-        </ul>
+        </div>
+        <button className="btn-primary md:self-end" onClick={add}>Add entry</button>
+        {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
       </div>
+
+      <ul className="divide-y divide-rule">
+        {q.data?.length === 0 && (
+          <li className="px-6 py-6 text-sm text-ash">Nothing here yet.</li>
+        )}
+        {q.data?.map((it) => (
+          <li key={it.id}>
+            {editingContext === it.id ? (
+              <div className="px-6 py-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-[1.05rem]">{it.name} — Context</span>
+                  <div className="flex gap-2">
+                    <button className="btn-primary !py-1 !px-3 text-xs" onClick={saveContext}>Save</button>
+                    <button className="btn-ghost" onClick={() => setEditingContext(null)}><X size={13} /></button>
+                  </div>
+                </div>
+                <textarea
+                  className="input min-h-[120px] !text-[13px]"
+                  placeholder={`## Project stack\nNext.js 14, Tailwind, Prisma, PostgreSQL\n\n## Structure\nsrc/ — all source\nprisma/ — schema & migrations\n\n## Conventions\n- RSC by default, 'use client' when needed\n- Tailwind for styling\n- Zod for validation`}
+                  value={contextDraft}
+                  onChange={(e) => setContextDraft(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule" style={{ background: it.color }} />}
+                  <span className="font-display text-[1.05rem]">{it.name}</span>
+                  {"rank" in it && it.rank != null && <span className="numeral text-[11px] text-dust">rank {it.rank}</span>}
+                  {"context" in it && it.context && <span className="chip !py-0 !px-1.5 text-[9px]"><FileText size={10} /></span>}
+                </div>
+                <div className="flex gap-1">
+                  {"context" in it && (
+                    <button className="btn-ghost" onClick={() => { setEditingContext(it.id); setContextDraft((it as any).context || ""); }}>
+                      <FileText size={13} /> Context
+                    </button>
+                  )}
+                  <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
+                    <Trash2 size={13} /> Remove
+                  </button>
+                </div>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -352,97 +346,94 @@ function TeamsSection() {
   };
 
   return (
-    <section className="paper-card">
-      <div className="relative z-[1]">
-        <header className="px-6 pt-5 pb-4 border-b border-rule">
-          <div className="flex items-baseline gap-3 mb-1">
-            <span className="numeral text-vermilion text-[12px]">05</span>
-            <span className="hairline flex-1 translate-y-[-3px]" />
-          </div>
-          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Teams</h2>
-          <p className="text-sm text-ash mt-1 italic">Share projects with other contributors.</p>
-        </header>
-
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
-          <label className="block">
-            <span className="eyebrow block mb-1">Team name</span>
-            <input className="input" placeholder="e.g. Frontend Squad" value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <button className="btn-primary md:self-end" onClick={add}>Create team</button>
-          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+    <section className="bg-cream/60 border border-rule rounded-md overflow-hidden">
+      <header className="px-6 pt-5 pb-4 border-b border-rule">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="numeral text-vermilion text-[11px]">05</span>
+          <h2 className="font-display text-[1.5rem] leading-[1.05] tracking-tightish">Teams</h2>
         </div>
+        <p className="text-sm text-ash">Share projects with other contributors.</p>
+      </header>
 
-        <ul className="divide-y divide-rule">
-          {teams.data?.length === 0 && (
-            <li className="px-6 py-6 text-sm text-ash italic">No teams yet.</li>
-          )}
-          {teams.data?.map((team) => (
-            <li key={team.id} className="px-6 py-4">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <div>
-                  <span className="font-display text-[1.05rem]">{team.name}</span>
-                  <span className="chip ml-2 text-[9px]">{team.role}</span>
-                </div>
-                {team.role === "admin" && (
-                  <button className="btn-ghost text-vermilion" onClick={() => del(team.id)}>
-                    <Trash2 size={13} /> Delete
+      <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule">
+        <label className="block">
+          <span className="text-[11px] text-ash block mb-1">Team name</span>
+          <input className="input" placeholder="e.g. Frontend Squad" value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <button className="btn-primary md:self-end" onClick={add}>Create team</button>
+        {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+      </div>
+
+      <ul className="divide-y divide-rule">
+        {teams.data?.length === 0 && (
+          <li className="px-6 py-6 text-sm text-ash">No teams yet.</li>
+        )}
+        {teams.data?.map((team) => (
+          <li key={team.id} className="px-6 py-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <span className="font-display text-[1.05rem]">{team.name}</span>
+                <span className="chip ml-2 text-[9px]">{team.role}</span>
+              </div>
+              {team.role === "admin" && (
+                <button className="btn-ghost text-vermilion" onClick={() => del(team.id)}>
+                  <Trash2 size={13} /> Delete
+                </button>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <span className="text-[11px] text-ash tracking-wide block mb-2">Members</span>
+              <div className="flex flex-wrap gap-2">
+                {team.members.map((m) => (
+                  <span key={m.id} className="inline-flex items-center gap-1.5 chip">
+                    @{m.username}
+                    {m.role === "admin" && <span className="text-[9px] text-vermilion">admin</span>}
+                    {team.role === "admin" && m.userId !== me.data?.id && (
+                      <>
+                        <button
+                          className="ml-1 text-ash hover:text-ink"
+                          title={m.role === "admin" ? "Demote to member" : "Promote to admin"}
+                          onClick={() => changeRole(team.id, m.userId, m.role === "admin" ? "member" : "admin")}
+                        >
+                          {m.role === "admin" ? "↓" : "↑"}
+                        </button>
+                        <button className="ml-0.5 text-ash hover:text-vermilion" onClick={() => removeMember(team.id, m.userId)}>
+                          <UserX size={11} />
+                        </button>
+                      </>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {team.role === "admin" && (
+              <div className="flex items-center gap-2">
+                {addingMember === team.id ? (
+                  <>
+                    <input
+                      className="input py-1.5 text-sm"
+                      placeholder="username"
+                      value={memberName}
+                      onChange={(e) => setMemberName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addMember(team.id)}
+                    />
+                    <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => addMember(team.id)}>Add</button>
+                    <button className="btn-ghost" onClick={() => { setAddingMember(null); setMemberName(""); }}>
+                      <X size={13} />
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn-ghost text-xs" onClick={() => setAddingMember(team.id)}>
+                    <UserPlus size={13} /> Add member
                   </button>
                 )}
               </div>
-
-              <div className="mb-3">
-                <span className="eyebrow block mb-2">Members</span>
-                <div className="flex flex-wrap gap-2">
-                  {team.members.map((m) => (
-                    <span key={m.id} className="inline-flex items-center gap-1.5 chip">
-                      @{m.username}
-                      {m.role === "admin" && <span className="text-[9px] text-vermilion">admin</span>}
-                      {team.role === "admin" && m.userId !== me.data?.id && (
-                        <>
-                          <button
-                            className="ml-1 text-ash hover:text-ink"
-                            title={m.role === "admin" ? "Demote to member" : "Promote to admin"}
-                            onClick={() => changeRole(team.id, m.userId, m.role === "admin" ? "member" : "admin")}
-                          >
-                            {m.role === "admin" ? "↓" : "↑"}
-                          </button>
-                          <button className="ml-0.5 text-ash hover:text-vermilion" onClick={() => removeMember(team.id, m.userId)}>
-                            <UserX size={11} />
-                          </button>
-                        </>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {team.role === "admin" && (
-                <div className="flex items-center gap-2">
-                  {addingMember === team.id ? (
-                    <>
-                      <input
-                        className="input py-1.5 text-sm"
-                        placeholder="username"
-                        value={memberName}
-                        onChange={(e) => setMemberName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addMember(team.id)}
-                      />
-                      <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => addMember(team.id)}>Add</button>
-                      <button className="btn-ghost" onClick={() => { setAddingMember(null); setMemberName(""); }}>
-                        <X size={13} />
-                      </button>
-                    </>
-                  ) : (
-                    <button className="btn-ghost text-xs" onClick={() => setAddingMember(team.id)}>
-                      <UserPlus size={13} /> Add member
-                    </button>
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -478,47 +469,44 @@ function UsersSection() {
   };
 
   return (
-    <section className="paper-card">
-      <div className="relative z-[1]">
-        <header className="px-6 pt-5 pb-4 border-b border-rule">
-          <div className="flex items-baseline gap-3 mb-1">
-            <span className="numeral text-vermilion text-[12px]">06</span>
-            <span className="hairline flex-1 translate-y-[-3px]" />
-          </div>
-          <h2 className="font-display text-[1.7rem] leading-[1.05] tracking-tightish">Contributors</h2>
-          <p className="text-sm text-ash mt-1 italic">People who can sign in. Each one keeps a PIN.</p>
-        </header>
-
-        <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule bg-cream/30">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="block">
-              <span className="eyebrow block mb-1">Handle</span>
-              <input className="input" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
-            </label>
-            <label className="block">
-              <span className="eyebrow block mb-1">PIN</span>
-              <input className="input tracking-[0.4em]" placeholder="••••" inputMode="numeric"
-                     value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))} />
-            </label>
-          </div>
-          <button className="btn-primary md:self-end" onClick={add}>Invite</button>
-          {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
+    <section className="bg-cream/60 border border-rule rounded-md overflow-hidden">
+      <header className="px-6 pt-5 pb-4 border-b border-rule">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="numeral text-vermilion text-[11px]">06</span>
+          <h2 className="font-display text-[1.5rem] leading-[1.05] tracking-tightish">Contributors</h2>
         </div>
+        <p className="text-sm text-ash">People who can sign in. Each one keeps a PIN.</p>
+      </header>
 
-        <ul className="divide-y divide-rule">
-          {q.data?.map((u) => (
-            <li key={u.id} className="px-6 py-3 flex items-center justify-between gap-3">
-              <span className="font-display text-[1.05rem]">@{u.username}</span>
-              <span className="flex gap-1">
-                {me.data?.id === u.id && (
-                  <button className="btn-ghost" onClick={() => resetPin(u.id)}>Reset PIN</button>
-                )}
-                <button className="btn-ghost text-vermilion" onClick={() => del(u.id)}><Trash2 size={13} /> Remove</button>
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end border-b border-rule">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="block">
+            <span className="text-[11px] text-ash block mb-1">Handle</span>
+            <input className="input" placeholder="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="text-[11px] text-ash block mb-1">PIN</span>
+            <input className="input tracking-[0.4em]" placeholder="••••" inputMode="numeric"
+                   value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+          </label>
+        </div>
+        <button className="btn-primary md:self-end" onClick={add}>Invite</button>
+        {error && <span className="text-sm text-vermilion col-span-full">{error}</span>}
       </div>
+
+      <ul className="divide-y divide-rule">
+        {q.data?.map((u) => (
+          <li key={u.id} className="px-6 py-3 flex items-center justify-between gap-3">
+            <span className="font-display text-[1.05rem]">@{u.username}</span>
+            <span className="flex gap-1">
+              {me.data?.id === u.id && (
+                <button className="btn-ghost" onClick={() => resetPin(u.id)}>Reset PIN</button>
+              )}
+              <button className="btn-ghost text-vermilion" onClick={() => del(u.id)}><Trash2 size={13} /> Remove</button>
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

@@ -61,7 +61,7 @@ function StatusColumnInner({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className="flex-1 min-h-[120px] space-y-3 transition-colors rounded-none p-2 -mx-2"
+            className="flex-1 min-h-[120px] space-y-3 transition-colors rounded-md p-2 -mx-2"
             style={{
               background: snapshot.isDraggingOver
                 ? "rgba(var(--soft-rgb), 0.35)"

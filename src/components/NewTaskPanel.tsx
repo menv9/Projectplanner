@@ -102,10 +102,10 @@ export function NewTaskPanel({
       {!plain && (
         <header className="px-5 pt-5 pb-4">
           <div className="flex items-baseline justify-between">
-            <span className="eyebrow">New entry</span>
+            <span className="text-[11px] text-ash tracking-wide">New entry</span>
             <span className="numeral text-[11px] text-dust">{step + 1} / 2</span>
           </div>
-          <h2 className="font-display text-[2rem] leading-[1] tracking-tightish mt-1">
+          <h2 className="font-display text-[1.6rem] leading-[1] tracking-tightish mt-1">
             <span className="display-italic text-vermilion">Compose</span> a task
           </h2>
           <p className="text-[12.5px] text-ash mt-2 leading-snug">
@@ -241,8 +241,8 @@ function NumberedField({ num, label, children }: { num: string; label: string; c
     <label className="block">
       <span className="flex items-baseline gap-2 mb-1.5">
         <span className="numeral text-vermilion text-[10.5px] font-medium">{num}</span>
-        <span className="hairline flex-1 translate-y-[-3px]" />
-        <span className="eyebrow">{label}</span>
+        <span className="flex-1 h-px bg-rule/60 translate-y-[-3px]" />
+        <span className="text-[11px] text-ash tracking-wide">{label}</span>
       </span>
       {children}
     </label>

@@ -74,8 +74,8 @@ function LoginShell() {
       {/* Right — sign-in plate */}
       <section className="flex items-center justify-center p-8">
         <form onSubmit={submit} className="w-full max-w-sm">
-          <div className="eyebrow mb-3">{hasUsers ? "Subscriber access" : "Founding edition"}</div>
-          <h2 className="font-display text-[2.4rem] leading-[1] tracking-tightish mb-1">
+          <span className="text-[11px] text-ash tracking-wide block mb-3">{hasUsers ? "Subscriber access" : "Founding edition"}</span>
+          <h2 className="font-display text-[2.2rem] leading-[1] tracking-tightish mb-1">
             {hasUsers === null ? <span className="text-ash">…</span> : hasUsers ? <><span className="display-italic text-vermilion">Welcome</span> back.</> : <><span className="display-italic text-vermilion">Begin</span> a new ledger.</>}
           </h2>
           <p className="text-sm text-ash mb-8">
@@ -84,7 +84,7 @@ function LoginShell() {
 
           <div className="space-y-5">
             <label className="block">
-              <span className="eyebrow block mb-1.5">Handle</span>
+              <span className="text-[11px] text-ash block mb-1.5">Handle</span>
               <input
                 className="input !text-[15px]"
                 autoFocus
@@ -94,7 +94,7 @@ function LoginShell() {
               />
             </label>
             <label className="block">
-              <span className="eyebrow block mb-1.5">PIN</span>
+              <span className="text-[11px] text-ash block mb-1.5">PIN</span>
               <input
                 className="input tracking-[0.4em] !text-[15px]"
                 inputMode="numeric"
@@ -117,7 +117,7 @@ function LoginShell() {
           </button>
 
           <div className="hairline mt-10" />
-          <p className="text-[11px] text-dust mt-3 italic">
+          <p className="text-[11px] text-dust mt-3">
             No password recovery, no telemetry, no clever tricks. Just a PIN.
           </p>
         </form>

@@ -104,7 +104,7 @@ function KanbanBoardInner({
         {columnStatuses.map((status) => (
           <div
             key={status.id}
-            className="paper-card p-4 relative flex flex-col h-full"
+            className="bg-cream/60 border border-rule rounded-md p-4 relative flex flex-col h-full"
             style={{ minHeight: 320 }}
           >
             <div className="relative z-[1] flex flex-col h-full">

@@ -57,6 +57,16 @@ export default function Home() {
     }
   }, [projects.data, activeProjectId]);
 
+  useEffect(() => {
+    if (me.data?.username?.toLowerCase() === "eris") {
+      document.documentElement.dataset.theme = "eris";
+      localStorage.setItem("erisTheme", "true");
+    } else if (me.data) {
+      document.documentElement.dataset.theme = "";
+      localStorage.removeItem("erisTheme");
+    }
+  }, [me.data]);
+
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
     Object.entries(filters).forEach(([k, v]) => v && sp.set(k, v));
@@ -82,6 +92,8 @@ export default function Home() {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    localStorage.removeItem("erisTheme");
+    document.documentElement.dataset.theme = "";
     router.push("/login");
     router.refresh();
   };
@@ -121,21 +133,17 @@ export default function Home() {
               <span className="font-display text-ink hidden sm:inline"> Project Planner</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            {me.data && (
-              <div className="text-right hidden md:block">
-                <div className="eyebrow">Signed in</div>
-                <div className="font-display italic text-[1.05rem] leading-tight">{me.data.username}</div>
-              </div>
-            )}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button className={viewingArchive ? "btn-primary" : "btn"} onClick={() => { setViewingArchive(!viewingArchive); setViewingTrash(false); }} title="Archive">
-              <Archive size={14} /> <span className="hidden sm:inline">{archivedTasks.data?.length ?? 0}</span>
+              <Archive size={14} />
+              <span className="hidden sm:inline text-xs">{archivedTasks.data?.length ?? 0}</span>
             </button>
             <button className={viewingTrash ? "btn-primary" : "btn"} onClick={() => { setViewingTrash(!viewingTrash); setViewingArchive(false); }} title="Trash">
-              <Trash2 size={14} /> <span className="hidden sm:inline">{trashTasks.data?.length ?? 0}</span>
+              <Trash2 size={14} />
+              <span className="hidden sm:inline text-xs">{trashTasks.data?.length ?? 0}</span>
             </button>
             <Link href="/settings" className="btn" title="Settings">
-              <SettingsIcon size={14} /> <span className="hidden sm:inline">Settings</span>
+              <SettingsIcon size={14} />
             </Link>
             <ThemeToggle />
             <button className="btn-ghost" onClick={logout} title="Log out"><LogOut size={14} /></button>
@@ -181,11 +189,9 @@ export default function Home() {
               {trashTasks.isLoading && <div className="text-ash eyebrow">Loading…</div>}
 
               {trashTasks.data && trashTasks.data.length === 0 && (
-                <div className="paper-card p-8 sm:p-12 text-center">
-                  <div className="relative z-[1]">
-                    <span className="eyebrow">Empty trash</span>
-                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No deleted tasks.</p>
-                  </div>
+                <div className="empty-state p-8 sm:p-12 text-center">
+                  <span className="eyebrow">Empty trash</span>
+                  <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No deleted tasks.</p>
                 </div>
               )}
 
@@ -204,7 +210,7 @@ export default function Home() {
                       qc.invalidateQueries({ queryKey: ["tasks"] });
                     };
                     return (
-                      <div key={t.id} className="paper-card text-left px-3 py-2.5 pl-5 w-full" style={{ borderRadius: 0 }}>
+                      <div key={t.id} className="paper-card text-left px-3 py-2.5 pl-5 w-full">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-0.5">
@@ -244,11 +250,9 @@ export default function Home() {
               {archivedTasks.isLoading && <div className="text-ash eyebrow">Loading…</div>}
 
               {archivedTasks.data && archivedTasks.data.length === 0 && (
-                <div className="paper-card p-8 sm:p-12 text-center">
-                  <div className="relative z-[1]">
-                    <span className="eyebrow">Empty archive</span>
-                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No archived tasks.</p>
-                  </div>
+                <div className="empty-state p-8 sm:p-12 text-center">
+                  <span className="eyebrow">Empty archive</span>
+                  <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No archived tasks.</p>
                 </div>
               )}
 
@@ -356,11 +360,9 @@ export default function Home() {
               )}
 
               {activeProject && tasks.data && tasks.data.length === 0 && (
-                <div className="paper-card p-8 sm:p-12 text-center">
-                  <div className="relative z-[1]">
-                    <span className="eyebrow">A blank page</span>
-                    <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No entries yet.</p>
-                  </div>
+                <div className="empty-state p-8 sm:p-12 text-center">
+                  <span className="eyebrow">A blank page</span>
+                  <p className="font-display text-[1.2rem] sm:text-[1.4rem] mt-2 italic text-ash">No entries yet.</p>
                 </div>
               )}
 
@@ -423,8 +425,7 @@ export default function Home() {
             onClick={() => setShowAddModal(false)}
           />
           <section
-            className="paper-card relative z-[1] w-full sm:max-w-xl max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-[0_30px_80px_-30px_rgba(0,0,0,0.5)]"
-            style={{ borderRadius: 0 }}
+            className="paper-card relative z-[1] w-full sm:max-w-xl max-h-[85vh] sm:max-h-[92vh] flex flex-col shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)]"
           >
             <div className="relative z-[1] flex items-center justify-between gap-4 border-b border-rule px-5 py-4">
               <div className="min-w-0">

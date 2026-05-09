@@ -44,18 +44,16 @@ body {
   background-color: rgb(var(--paper-rgb));
   color: rgb(var(--ink-rgb));
   background-image:
-    radial-gradient(1200px 800px at 80% -200px, rgba(195, 53, 24, 0.06), transparent 60%),
-    radial-gradient(900px 700px at -100px 100%, rgba(184, 138, 44, 0.05), transparent 60%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    radial-gradient(1200px 800px at 80% -200px, rgba(195, 53, 24, 0.05), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.03 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   background-attachment: fixed;
   font-feature-settings: "ss01", "cv11";
 }
 
 .dark body {
   background-image:
-    radial-gradient(1200px 800px at 80% -200px, rgba(232, 85, 53, 0.04), transparent 60%),
-    radial-gradient(900px 700px at -100px 100%, rgba(212, 168, 48, 0.03), transparent 60%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    radial-gradient(1200px 800px at 80% -200px, rgba(232, 85, 53, 0.03), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.02 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 ::selection { background: rgb(var(--ink-rgb)); color: rgb(var(--cream-rgb)); }
@@ -63,6 +61,42 @@ body {
 .dark ::selection {
   background: rgb(var(--ink-rgb));
   color: rgb(var(--paper-rgb));
+}
+
+/* ---------- Eris theme ---------- */
+[data-theme="eris"] {
+  --paper-rgb: 21 7 29;
+  --cream-rgb: 31 10 41;
+  --ivory-rgb: 45 15 60;
+  --ink-rgb: 236 223 233;
+  --ash-rgb: 149 90 216;
+  --dust-rgb: 166 105 201;
+  --rule-rgb: 61 20 82;
+  --soft-rgb: 92 31 122;
+  --vermilion-rgb: 149 90 216;
+  --ochre-rgb: 178 108 198;
+  --forest-rgb: 129 75 114;
+  --plum-rgb: 175 131 226;
+  --overlay-rgb: 0 0 0;
+  --shadow-rgb: 0 0 0;
+  color-scheme: dark;
+}
+
+.dark[data-theme="eris"] body {
+  background-image:
+    radial-gradient(1200px 800px at 80% -200px, rgba(149, 90, 216, 0.06), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.02 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+[data-theme="eris"] ::selection {
+  background: rgb(var(--plum-rgb));
+  color: rgb(var(--paper-rgb));
+}
+
+.dark[data-theme="eris"] .btn-primary {
+  background-color: #5c1f7a;
+  border-color: #5c1f7a;
+  color: #f6eff4;
 }
 
 /* ---------- Type ---------- */
@@ -85,16 +119,17 @@ body {
 
 /* ---------- Inputs & buttons ---------- */
 .input {
-  @apply w-full px-3 py-2.5 text-sm rounded-none outline-none transition;
+  @apply w-full px-3.5 py-2 text-sm rounded-md outline-none transition;
   font-family: var(--font-sans);
   background-color: rgb(var(--ivory-rgb));
   border: 1px solid rgb(var(--rule-rgb));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
   color: rgb(var(--ink-rgb));
+  min-height: 2.5rem;
 }
 .input:focus {
   border-color: rgb(var(--ink-rgb));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 0 0 3px rgba(0,0,0,0.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 0 0 3px rgba(0,0,0,0.05);
 }
 .input::placeholder { color: rgb(var(--dust-rgb)); }
 
@@ -118,14 +153,19 @@ select.input {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='rgb(232,224,208)' stroke-width='1.4' d='M1 1l4 4 4-4'/></svg>");
 }
 
+.dark[data-theme="eris"] select.input {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='rgb(236,223,233)' stroke-width='1.4' d='M1 1l4 4 4-4'/></svg>");
+}
+
 textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 
 .btn {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-none;
+  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-md;
   font-family: var(--font-sans);
   background-color: rgb(var(--cream-rgb));
-  border: 1px solid rgba(var(--ink-rgb), 0.2);
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
   color: rgb(var(--ink-rgb));
+  min-height: 2.5rem;
 }
 .btn:hover {
   background-color: rgba(var(--ink-rgb), 0.06);
@@ -147,11 +187,12 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-none;
+  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-md;
   font-family: var(--font-sans);
   background-color: rgb(var(--ink-rgb));
   border: 1px solid rgb(var(--ink-rgb));
   color: #f8f2e2;
+  min-height: 2.5rem;
 }
 .btn-primary:hover { opacity: 0.85; }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -163,10 +204,11 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 }
 
 .btn-accent {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-none;
+  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 text-sm font-medium transition rounded-md;
   background-color: rgb(var(--vermilion-rgb));
   border: 1px solid rgb(var(--vermilion-rgb));
   color: #f8f2e2;
+  min-height: 2.5rem;
 }
 .btn-accent:hover { filter: brightness(1.1); }
 
@@ -175,13 +217,13 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 }
 
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-1.5 px-2 py-1 text-sm transition rounded-none;
+  @apply inline-flex items-center justify-center gap-1.5 px-2 py-1 text-sm transition rounded-md;
   color: rgb(var(--ash-rgb));
 }
 .btn-ghost:hover { color: rgb(var(--ink-rgb)); }
 
 .view-toggle {
-  @apply inline-flex items-center;
+  @apply inline-flex items-center rounded-md overflow-hidden;
   border: 1px solid rgb(var(--rule-rgb));
   background-color: rgb(var(--cream-rgb));
 }
@@ -200,20 +242,25 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 /* ---------- Decorative pieces ---------- */
 .hairline { height: 1px; background: rgb(var(--rule-rgb)); width: 100%; }
 
+.empty-state {
+  border: 1px dashed rgb(var(--rule-rgb));
+  border-radius: 6px;
+  background: transparent;
+}
+
 .chip {
-  @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-[10.5px] uppercase transition rounded-none;
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] uppercase transition rounded-full;
   font-family: var(--font-mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   border: 1px solid rgb(var(--rule-rgb));
   background-color: rgb(var(--cream-rgb));
   color: rgb(var(--ash-rgb));
-  border-radius: 999px;
 }
 
 .status-pill {
-  @apply inline-flex items-center justify-center gap-1.5 rounded-full transition px-3 py-1 text-[10.5px] uppercase;
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full transition px-3 py-1 text-[11px] uppercase;
   font-family: var(--font-mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   border: 1px solid rgb(var(--rule-rgb));
   background-color: rgb(var(--ivory-rgb));
   color: rgb(var(--ash-rgb));
@@ -236,19 +283,21 @@ textarea.input { font-family: var(--font-sans); line-height: 1.55; }
 .paper-card {
   background: linear-gradient(180deg, rgb(var(--ivory-rgb)) 0%, rgb(var(--cream-rgb)) 100%);
   border: 1px solid rgb(var(--rule-rgb));
+  border-radius: 6px;
   position: relative;
 }
 .paper-card::after {
   content: "";
   position: absolute; inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.025 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.10 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.015 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   mix-blend-mode: multiply;
-  opacity: 0.5;
+  opacity: 0.35;
 }
 
 .dark .paper-card::after {
-  opacity: 0.15;
+  opacity: 0.08;
 }
 
 /* Underlined tab marker */

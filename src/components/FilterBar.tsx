@@ -20,37 +20,34 @@ export function FilterBar({
   const clear = () => setFilters({ ...(filters.projectId ? { projectId: filters.projectId } : {}) });
 
   return (
-    <div className="paper-card p-4 relative">
-      <div className="relative z-[1]">
-        <div className="flex items-center justify-between mb-3">
-          <span className="eyebrow">Filter — Refine the view</span>
-          {active > 0 && (
-            <button onClick={clear} className="btn-ghost"><X size={12} /> Clear {active}</button>
-          )}
+    <div className="bg-cream/60 border border-rule rounded-md p-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] text-ash tracking-wide">Filter</span>
+        {active > 0 && (
+          <button onClick={clear} className="btn-ghost"><X size={12} /> Clear {active}</button>
+        )}
+      </div>
+      <StatusPills value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
+      <div className="flex flex-wrap items-end gap-2 mb-2">
+        <div className="min-w-[140px] flex-1">
+          <label className="relative block">
+            <Search size={14} className="absolute right-3 inset-y-0 my-auto text-dust pointer-events-none" />
+            <input
+              className="input pr-9"
+              placeholder="Search titles or notes…"
+              value={filters.q || ""}
+              onChange={(e) => set("q", e.target.value)}
+            />
+          </label>
         </div>
-        <StatusPills value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
-        <div className="flex flex-wrap items-end gap-2 mb-2">
-          <div className="min-w-[140px] flex-1">
-            <span className="eyebrow block mb-1">Search</span>
-            <label className="relative block">
-              <Search size={14} className="absolute right-3 inset-y-0 my-auto text-dust pointer-events-none" />
-              <input
-                className="input pr-9"
-                placeholder="Title or notes…"
-                value={filters.q || ""}
-                onChange={(e) => set("q", e.target.value)}
-              />
-            </label>
-          </div>
-          <Select label="Priority" value={filters.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
-          <Select label="Category" value={filters.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          <Select label="Author" value={filters.authorId} onChange={(v) => set("authorId", v)}
-                  options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
-          <DateField label="From" value={filters.from} onChange={(v) => set("from", v)} />
-          <DateField label="To" value={filters.to} onChange={(v) => set("to", v)} />
-        </div>
+        <Select label="Priority" value={filters.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
+        <Select label="Category" value={filters.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        <Select label="Author" value={filters.authorId} onChange={(v) => set("authorId", v)}
+                options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
+        <DateField label="From" value={filters.from} onChange={(v) => set("from", v)} />
+        <DateField label="To" value={filters.to} onChange={(v) => set("to", v)} />
       </div>
     </div>
   );
@@ -61,7 +58,7 @@ function Select({
 }: { label: string; value?: string; onChange: (v: string) => void; options: { id: string; name: string }[] }) {
   return (
     <label className="block">
-      <span className="eyebrow block mb-1">{label}</span>
+      <span className="text-[11px] text-ash block mb-1">{label}</span>
       <select className="input" value={value || ""} onChange={(e) => onChange(e.target.value)}>
         <option value="">All</option>
         {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -105,7 +102,7 @@ function DateField({ label, value, onChange }: { label: string; value?: string; 
   const v = value ? value.slice(0, 10) : "";
   return (
     <label className="block">
-      <span className="eyebrow block mb-1">{label}</span>
+      <span className="text-[11px] text-ash block mb-1">{label}</span>
       <input type="date" className="input" value={v}
              onChange={(e) => onChange(e.target.value ? new Date(e.target.value).toISOString() : "")} />
     </label>

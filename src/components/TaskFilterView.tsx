@@ -66,49 +66,47 @@ export function TaskFilterView({
 
   return (
     <div className="space-y-6">
-      <div className="paper-card p-5 relative">
-        <div className="relative z-[1] space-y-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <span className="eyebrow">Advanced Filter — Find anything</span>
-            {activeFilters > 0 && (
-              <button onClick={clear} className="btn-ghost">
-                <X size={12} /> Clear {activeFilters}
-              </button>
-            )}
-          </div>
+      <div className="bg-cream/60 border border-rule rounded-md p-5 space-y-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <span className="text-[11px] text-ash tracking-wide">Advanced Filter</span>
+          {activeFilters > 0 && (
+            <button onClick={clear} className="btn-ghost">
+              <X size={12} /> Clear {activeFilters}
+            </button>
+          )}
+        </div>
 
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[200px] flex-1">
-              <label className="relative block">
-                <Search size={14} className="absolute left-3 inset-y-0 my-auto text-dust pointer-events-none" />
-                <input
-                  className="input pl-9 pr-3 py-2.5 w-full"
-                  placeholder="Search titles or notes…"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-              </label>
-            </div>
-            <Select label="Priority" value={priorityId} onChange={setPriorityId} options={opts.priorities} />
-            <Select label="Category" value={categoryId} onChange={setCategoryId} options={opts.categories} />
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[200px] flex-1">
+            <label className="relative block">
+              <Search size={14} className="absolute left-3 inset-y-0 my-auto text-dust pointer-events-none" />
+              <input
+                className="input pl-9 pr-3 py-2 w-full"
+                placeholder="Search titles or notes…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </label>
           </div>
+          <Select label="Priority" value={priorityId} onChange={setPriorityId} options={opts.priorities} />
+          <Select label="Category" value={categoryId} onChange={setCategoryId} options={opts.categories} />
+        </div>
 
-          <div className="flex flex-wrap items-end gap-3">
-            <Select
-              label="Author"
-              value={authorId}
-              onChange={setAuthorId}
-              options={opts.users.map((u) => ({ id: u.id, name: u.username }))}
-            />
-            <DateField label="From" value={from} onChange={setFrom} />
-            <DateField label="To" value={to} onChange={setTo} />
-          </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <Select
+            label="Author"
+            value={authorId}
+            onChange={setAuthorId}
+            options={opts.users.map((u) => ({ id: u.id, name: u.username }))}
+          />
+          <DateField label="From" value={from} onChange={setFrom} />
+          <DateField label="To" value={to} onChange={setTo} />
         </div>
       </div>
 
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <div className="eyebrow mb-1">Results</div>
+          <span className="text-[11px] text-ash tracking-wide block mb-1">Results</span>
           <h2 className="font-display text-[2rem] leading-[0.95] tracking-tightish">
             {filtered.length} tasks match
           </h2>
@@ -136,11 +134,9 @@ export function TaskFilterView({
       </div>
 
       {filtered.length === 0 && (
-        <div className="paper-card p-12 text-center">
-          <div className="relative z-[1]">
-            <span className="eyebrow">No matches</span>
-            <p className="font-display text-[1.4rem] mt-2 italic text-ash">Adjust your filters to find tasks.</p>
-          </div>
+        <div className="empty-state p-12 text-center">
+          <span className="text-[11px] text-ash tracking-wide">No matches</span>
+          <p className="font-display text-[1.4rem] mt-2 italic text-ash">Adjust your filters to find tasks.</p>
         </div>
       )}
 
@@ -180,7 +176,7 @@ function Select({
 }) {
   return (
     <label className="block min-w-[140px] flex-1">
-      <span className="eyebrow block mb-1">{label}</span>
+      <span className="text-[11px] text-ash block mb-1">{label}</span>
       <select className="input" value={value || ""} onChange={(e) => onChange(e.target.value)}>
         <option value="">All</option>
         {options.map((o) => (
@@ -203,7 +199,7 @@ function DateField({
   const v = value ? value.slice(0, 10) : "";
   return (
     <label className="block min-w-[140px] flex-1">
-      <span className="eyebrow block mb-1">{label}</span>
+      <span className="text-[11px] text-ash block mb-1">{label}</span>
       <input
         type="date"
         className="input"
