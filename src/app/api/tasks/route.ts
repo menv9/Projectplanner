@@ -12,7 +12,8 @@ const Create = z.object({
   authorId: z.string().min(1),
   priorityId: z.string().min(1),
   statusId: z.string().min(1),
-  categoryId: z.string().optional().nullable()
+  categoryId: z.string().optional().nullable(),
+  location: z.string().optional().nullable()
 });
 
 export async function GET(req: NextRequest) {
@@ -139,7 +140,8 @@ export async function POST(req: NextRequest) {
       authorId: data.authorId,
       priorityId: data.priorityId,
       statusId: data.statusId,
-      categoryId: data.categoryId || null
+      categoryId: data.categoryId || null,
+      location: data.location || null
     },
     include: { project: true, priority: true, status: true, category: true, author: { select: { id: true, username: true } } }
   });

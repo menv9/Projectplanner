@@ -20,6 +20,7 @@ type Form = {
   statusId: string;
   categoryId: string;
   dueDate: string;
+  location: string;
   notes: string;
 };
 
@@ -59,6 +60,7 @@ export function TaskDetailModal({
       statusId: task.status.id,
       categoryId: task.category?.id || "",
       dueDate: toDateInput(task.dueDate),
+      location: task.location || "",
       notes: task.notes || ""
     });
     setError(null);
@@ -91,7 +93,8 @@ export function TaskDetailModal({
           authorId: form.authorId,
           priorityId: form.priorityId,
           statusId: form.statusId,
-          categoryId: form.categoryId || null
+          categoryId: form.categoryId || null,
+          location: form.location.trim() || null
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -212,6 +215,16 @@ export function TaskDetailModal({
             <label className="block">
               <span className="text-[11px] text-ash block mb-1">Due</span>
               <input type="date" className="input" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+            </label>
+
+            <label className="block sm:col-span-2">
+              <span className="text-[11px] text-ash block mb-1">Task Page</span>
+              <input
+                className="input !text-[15px]"
+                placeholder="Where will this take place?"
+                value={form.location}
+                onChange={(e) => set("location", e.target.value)}
+              />
             </label>
 
             <label className="block sm:col-span-2">

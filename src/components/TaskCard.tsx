@@ -2,7 +2,7 @@
 import { memo, useEffect, useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore } from "lucide-react";
+import { Archive, ArchiveRestore, MapPin } from "lucide-react";
 
 function StatusHoverTrigger({
   task,
@@ -108,6 +108,12 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interact
           {task.notes}
         </p>
       )}
+      {task.location && (
+        <p className="text-[12.5px] text-ash leading-relaxed flex items-center gap-1">
+          <MapPin size={12} className="shrink-0" />
+          {task.location}
+        </p>
+      )}
 
       <footer className="mt-auto pt-3 border-t border-rule/70 flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -180,6 +186,12 @@ function TaskRowInner({ task, statuses, onClick, onUpdated, onArchive }: {
             {task.notes && (
               <p className="text-[12.5px] text-ash leading-relaxed truncate">
                 {task.notes}
+              </p>
+            )}
+            {task.location && (
+              <p className="text-[12px] text-ash leading-relaxed truncate flex items-center gap-1">
+                <MapPin size={11} className="shrink-0" />
+                {task.location}
               </p>
             )}
           </div>

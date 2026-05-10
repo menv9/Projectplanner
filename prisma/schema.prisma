@@ -110,6 +110,7 @@ model Task {
   status        Status         @relation(fields: [statusId], references: [id])
   categoryId    String?
   category      Category?      @relation(fields: [categoryId], references: [id])
+  location      String?
   deletedAt     DateTime?
   archivedAt    DateTime?
   notifications Notification[]

@@ -15,6 +15,7 @@ type Form = {
   statusId: string;
   categoryId: string;
   dueDate: string;
+  location: string;
   notes: string;
 };
 
@@ -26,6 +27,7 @@ const empty = (currentUserId: string, opts: Opts): Form => ({
   statusId: opts.statuses[0]?.id || "",
   categoryId: "",
   dueDate: "",
+  location: "",
   notes: ""
 });
 
@@ -82,7 +84,8 @@ export function NewTaskPanel({
           authorId: form.authorId,
           priorityId: form.priorityId,
           statusId: form.statusId,
-          categoryId: form.categoryId || null
+          categoryId: form.categoryId || null,
+          location: form.location || null
         })
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed to create");
@@ -215,6 +218,14 @@ function StepBasics({ form, setForm, opts, hideProject }: { form: Form; setForm:
         </NumberedField>
         <NumberedField num={hideProject ? "06" : "07"} label="Due">
           <input type="date" className="input" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+        </NumberedField>
+        <NumberedField num={hideProject ? "07" : "08"} label="Task Page">
+          <input
+            className="input !text-[15px]"
+            placeholder="Where will this take place?"
+            value={form.location}
+            onChange={(e) => set("location", e.target.value)}
+          />
         </NumberedField>
       </div>
     </div>

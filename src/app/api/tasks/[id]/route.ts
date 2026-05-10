@@ -12,6 +12,7 @@ const Patch = z.object({
   priorityId: z.string().optional(),
   statusId: z.string().optional(),
   categoryId: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
   archived: z.boolean().optional()
 });
 
@@ -98,6 +99,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(d.priorityId !== undefined && { priorityId: d.priorityId }),
       ...(d.statusId !== undefined && { statusId: d.statusId }),
       ...(d.categoryId !== undefined && { categoryId: d.categoryId }),
+      ...(d.location !== undefined && { location: d.location }),
       ...(d.archived !== undefined && { archivedAt: d.archived ? new Date() : null })
     },
     include

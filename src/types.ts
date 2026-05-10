@@ -34,6 +34,7 @@ export type Task = {
   author: User;
   priority: Priority;
   status: Status;
+  location: string | null;
   category: Category | null;
 };
 
