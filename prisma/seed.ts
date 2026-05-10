@@ -20,7 +20,7 @@ async function main() {
     { name: "High", rank: 3, color: "#ef4444" }
   ];
   const statuses = [
-    { name: "Todo", rank: 1, color: "#6b7280" },
+    { name: "To Do", rank: 1, color: "#6b7280" },
     { name: "Doing", rank: 2, color: "#3b82f6" },
     { name: "Done", rank: 3, color: "#10b981" }
   ];

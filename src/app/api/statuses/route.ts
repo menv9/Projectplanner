@@ -6,7 +6,7 @@ import { bad, ensureAuth, json } from "@/lib/api";
 const Create = z.object({ name: z.string().min(1).max(60), rank: z.number().int().default(0), color: z.string().optional().nullable() });
 
 const DEFAULTS = [
-  { name: "Todo", rank: 1, color: "#6b7280" },
+  { name: "To Do", rank: 1, color: "#6b7280" },
   { name: "Doing", rank: 2, color: "#3b82f6" },
   { name: "Done", rank: 3, color: "#10b981" }
 ];

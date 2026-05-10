@@ -46,7 +46,7 @@ export default function SettingsPage() {
         <Section<Status>
           n="03"
           title="Statuses"
-          subtitle="The columns of progress. Todo, doing, done — or whatever you like."
+          subtitle="The columns of progress. To do, doing, done — or whatever you like."
           endpoint="/api/statuses"
           queryKey="statuses"
           fields={[

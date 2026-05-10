@@ -24,7 +24,7 @@ const empty = (currentUserId: string, opts: Opts): Form => ({
   projectId: opts.projects[0]?.id || "",
   authorId: currentUserId,
   priorityId: opts.priorities[0]?.id || "",
-  statusId: opts.statuses[0]?.id || "",
+  statusId: opts.statuses.find((s) => s.name.toLowerCase() !== "todo")?.id || opts.statuses[0]?.id || "",
   categoryId: "",
   dueDate: "",
   location: "",
@@ -207,7 +207,7 @@ function StepBasics({ form, setForm, opts, hideProject }: { form: Form; setForm:
         </NumberedField>
         <NumberedField num={hideProject ? "04" : "05"} label="Status">
           <select className="input" value={form.statusId} onChange={(e) => set("statusId", e.target.value)}>
-            {opts.statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {opts.statuses.filter((s) => s.name.toLowerCase() !== "todo").map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </NumberedField>
         <NumberedField num={hideProject ? "05" : "06"} label="Category">

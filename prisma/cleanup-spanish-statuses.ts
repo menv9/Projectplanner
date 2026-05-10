@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const replacements = [
-  { from: "No iniciada", to: "Todo", rank: 1, color: "#6b7280" },
+  { from: "No iniciada", to: "To Do", rank: 1, color: "#6b7280" },
   { from: "En curso", to: "Doing", rank: 2, color: "#3b82f6" },
   { from: "Completada", to: "Done", rank: 3, color: "#10b981" },
   { from: "Bloqueada", to: "Blocked", rank: 4, color: "#c33518" },
