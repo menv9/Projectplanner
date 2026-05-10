@@ -312,27 +312,28 @@ export default function Home() {
           ) : (
             <>
               {activeProject ? (
-                <div className="flex items-end justify-between gap-3 flex-wrap">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="min-w-0">
                     <div className="eyebrow mb-1">Now reading</div>
                     <h2 className="font-display text-[1.6rem] sm:text-[2.2rem] lg:text-[2.6rem] leading-[0.95] tracking-tightish truncate">
                       {activeProject.name}
                     </h2>
                   </div>
-                  <div className="flex items-end gap-2 sm:gap-4 flex-shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
                     <button
                       className="btn-accent lg:hidden"
                       onClick={() => setShowAddModal(true)}
                     >
-                      <Plus size={14} /> <span className="hidden sm:inline">Add task</span>
+                      <Plus size={14} /> <span className="sm:hidden">Add</span><span className="hidden sm:inline">Add task</span>
                     </button>
-                    <div className="text-right">
-                      <div className="numeral text-[1.8rem] sm:text-[2.6rem] leading-none text-vermilion">
-                        {String(tasks.data?.length ?? 0).padStart(2, "0")}
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className="text-right">
+                        <div className="numeral text-[1.4rem] sm:text-[1.8rem] lg:text-[2.6rem] leading-none text-vermilion">
+                          {String(tasks.data?.length ?? 0).padStart(2, "0")}
+                        </div>
+                        <div className="eyebrow hidden sm:block">tasks on file</div>
                       </div>
-                      <div className="eyebrow">tasks on file</div>
-                    </div>
-                    <div className="view-toggle" aria-label="Task view">
+                      <div className="view-toggle" aria-label="Task view">
                       <button
                         type="button"
                         className="view-toggle-btn"
@@ -376,6 +377,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              </div>
               ) : (
                 <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
