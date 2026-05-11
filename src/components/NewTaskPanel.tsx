@@ -56,9 +56,15 @@ export function NewTaskPanel({
   }, [lockedProjectId]);
 
   useEffect(() => {
-    if (ready && !form.projectId && (lockedProjectId || opts.projects[0])) {
-      setForm({ ...empty(currentUserId, opts), projectId: lockedProjectId || opts.projects[0]?.id || "" });
-    }
+    if (!ready) return;
+    const seed = empty(currentUserId, opts);
+    setForm((f) => ({
+      ...f,
+      projectId: f.projectId || lockedProjectId || seed.projectId,
+      priorityId: f.priorityId || seed.priorityId,
+      statusId: f.statusId || seed.statusId,
+      authorId: f.authorId || seed.authorId
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, opts.projects.length, opts.priorities.length, opts.statuses.length]);
 
