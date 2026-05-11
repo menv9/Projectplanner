@@ -228,53 +228,40 @@ export default function Home() {
         </div>
       </header>
 
-      <main className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 ${composeCollapsed ? "lg:grid-cols-[40px_1fr]" : "lg:grid-cols-[380px_1fr]"} gap-6 lg:gap-10 transition-[grid-template-columns] duration-300 ease-out`}>
+      <main className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 ${composeCollapsed ? "lg:grid-cols-[40px_1fr]" : "lg:grid-cols-[380px_1fr]"} gap-6 lg:gap-10`}>
         {me.data && (
-          <div className="hidden lg:block relative">
-            <div
-              className="overflow-hidden transition-[max-width,opacity] duration-300 ease-out"
-              style={{
-                maxWidth: composeCollapsed ? 40 : 380,
-                opacity: composeCollapsed ? 0 : 1,
-                pointerEvents: composeCollapsed ? "none" : "auto"
-              }}
-              aria-hidden={composeCollapsed}
-            >
-              <NewTaskPanel
-                opts={opts}
-                currentUserId={me.data.id}
-                ready={ready}
-                lockedProjectId={activeProjectId}
-                onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setComposeCollapsed(false)}
-              className="paper-card absolute top-0 left-0 w-10 py-3 flex flex-col items-center gap-2 hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)] transition-opacity duration-300 ease-out"
-              style={{
-                opacity: composeCollapsed ? 1 : 0,
-                pointerEvents: composeCollapsed ? "auto" : "none"
-              }}
-              title="Expand compose panel"
-              aria-label="Expand compose panel"
-            >
-              <ChevronRight size={14} />
-              <span className="eyebrow [writing-mode:vertical-rl] rotate-180 tracking-widest">Compose</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setComposeCollapsed(true)}
-              className="absolute -right-3 top-3 z-10 btn-ghost !p-1 bg-paper border border-rule rounded-full shadow-sm transition-opacity duration-200"
-              style={{
-                opacity: composeCollapsed ? 0 : 1,
-                pointerEvents: composeCollapsed ? "none" : "auto"
-              }}
-              title="Collapse compose panel"
-              aria-label="Collapse compose panel"
-            >
-              <ChevronLeft size={14} />
-            </button>
+          <div className="hidden lg:block">
+            {composeCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setComposeCollapsed(false)}
+                className="paper-card w-10 py-3 flex flex-col items-center gap-2 hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)] transition sticky top-28"
+                title="Expand compose panel"
+                aria-label="Expand compose panel"
+              >
+                <ChevronRight size={14} />
+                <span className="eyebrow [writing-mode:vertical-rl] rotate-180 tracking-widest">Compose</span>
+              </button>
+            ) : (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setComposeCollapsed(true)}
+                  className="absolute -right-3 top-3 z-10 btn-ghost !p-1 bg-paper border border-rule rounded-full shadow-sm"
+                  title="Collapse compose panel"
+                  aria-label="Collapse compose panel"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <NewTaskPanel
+                  opts={opts}
+                  currentUserId={me.data.id}
+                  ready={ready}
+                  lockedProjectId={activeProjectId}
+                  onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                />
+              </div>
+            )}
           </div>
         )}
 
