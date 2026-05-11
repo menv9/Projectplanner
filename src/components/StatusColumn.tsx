@@ -13,7 +13,8 @@ function StatusColumnInner({
   onTaskClick,
   onUpdated,
   horizontal = false,
-  onOptimisticPatch
+  onOptimisticPatch,
+  hideHeader = false
 }: {
   status: Status;
   tasks: Task[];
@@ -22,6 +23,7 @@ function StatusColumnInner({
   onUpdated?: () => void;
   onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
   horizontal?: boolean;
+  hideHeader?: boolean;
 }) {
   const [query, setQuery] = useState("");
 
@@ -37,16 +39,18 @@ function StatusColumnInner({
 
   return (
     <div className="flex flex-col h-full min-w-0">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{ background: status.color || "#9a9081" }}
-          />
-          <span className="eyebrow truncate">{status.name}</span>
-          <span className="numeral text-[11px] text-ash">{tasks.length}</span>
+      {!hideHeader && (
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ background: status.color || "#9a9081" }}
+            />
+            <span className="eyebrow truncate">{status.name}</span>
+            <span className="numeral text-[11px] text-ash">{tasks.length}</span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mb-3">
         <label className="relative block">

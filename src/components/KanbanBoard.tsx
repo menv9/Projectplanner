@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
 
@@ -16,7 +17,9 @@ function KanbanBoardInner({
   onTaskAttention,
   onTaskClick,
   onUpdated,
-  onOptimisticPatch
+  onOptimisticPatch,
+  attentionCollapsed = false,
+  onToggleAttention
 }: {
   tasks: Task[];
   statuses: Status[];
@@ -25,6 +28,8 @@ function KanbanBoardInner({
   onTaskClick?: (task: Task) => void;
   onUpdated?: () => void;
   onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
+  attentionCollapsed?: boolean;
+  onToggleAttention?: () => void;
 }) {
   const [items, setItems] = useState(tasks);
 
@@ -144,20 +149,39 @@ function KanbanBoardInner({
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="space-y-6">
         {hasAttention && (
-          <div
-            className="border border-vermilion/40 bg-vermilion/[0.04] rounded-md p-4 relative flex flex-col"
-          >
-            <div className="relative z-[1] flex flex-col">
-              <StatusColumn
-                status={attentionStatus}
-                tasks={grouped.attention}
-                statuses={statuses}
-                onTaskClick={onTaskClick}
-                onUpdated={onUpdated}
-                onOptimisticPatch={onOptimisticPatch}
-                horizontal
-              />
-            </div>
+          <div className="border border-vermilion/40 bg-vermilion/[0.04] rounded-md relative flex flex-col">
+            <button
+              type="button"
+              onClick={onToggleAttention}
+              className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left"
+            >
+              <span className="flex items-center gap-2">
+                <AlertCircle size={14} className="text-vermilion" />
+                <span className="eyebrow !text-vermilion">Attention</span>
+                <span className="numeral text-[11px] text-vermilion">
+                  {String(grouped.attention.length).padStart(2, "0")}
+                </span>
+              </span>
+              {attentionCollapsed ? (
+                <ChevronDown size={14} className="text-vermilion" />
+              ) : (
+                <ChevronUp size={14} className="text-vermilion" />
+              )}
+            </button>
+            {!attentionCollapsed && (
+              <div className="relative z-[1] flex flex-col px-4 pb-4">
+                <StatusColumn
+                  status={attentionStatus}
+                  tasks={grouped.attention}
+                  statuses={statuses}
+                  onTaskClick={onTaskClick}
+                  onUpdated={onUpdated}
+                  onOptimisticPatch={onOptimisticPatch}
+                  horizontal
+                  hideHeader
+                />
+              </div>
+            )}
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">

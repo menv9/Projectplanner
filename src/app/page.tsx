@@ -558,6 +558,8 @@ export default function Home() {
                   onTaskClick={(t) => setSelected(t)}
                   onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
                   onOptimisticPatch={patchTaskCache}
+                  attentionCollapsed={attentionCollapsed}
+                  onToggleAttention={() => setAttentionCollapsed((v) => !v)}
                 />
               )}
 
