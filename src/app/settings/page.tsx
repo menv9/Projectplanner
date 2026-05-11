@@ -200,6 +200,21 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
     const res = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
+    if (res.status === 409 && queryKey === "statuses" && q.data) {
+      const others = q.data.filter((x) => x.id !== id);
+      if (others.length === 0) { alert("Status is in use and there's no other status to reassign tasks to."); return; }
+      const list = others.map((o, i) => `${i + 1}. ${o.name}`).join("\n");
+      const answer = window.prompt(`This status has tasks. Move them to which status?\n${list}\n\nEnter the number:`);
+      if (!answer) return;
+      const idx = parseInt(answer, 10) - 1;
+      const target = others[idx];
+      if (!target) { alert("Invalid choice"); return; }
+      const res2 = await fetch(`${endpoint}/${id}?reassignTo=${target.id}`, { method: "DELETE" });
+      if (!res2.ok) { alert((await res2.json()).error || "Failed"); return; }
+      qc.invalidateQueries({ queryKey: [queryKey] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      return;
+    }
     if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
     qc.invalidateQueries({ queryKey: [queryKey] });
   };

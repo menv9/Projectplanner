@@ -141,6 +141,41 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
+  // Notify on status transition to "Done"
+  if (
+    d.statusId !== undefined &&
+    d.statusId !== prev.statusId &&
+    t.status.name.toLowerCase() === "done"
+  ) {
+    const project = prev.project;
+    const message = `'${t.title}' marcada como hecha`;
+    let notifyUserIds: string[] = [];
+
+    if (project.teamId) {
+      const members = await prisma.teamMember.findMany({
+        where: { teamId: project.teamId },
+        select: { userId: true }
+      });
+      notifyUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
+    } else if (project.ownerId && project.ownerId !== auth.user.id) {
+      notifyUserIds = [project.ownerId];
+    } else if (!project.ownerId && !project.teamId) {
+      const allUsers = await prisma.user.findMany({ select: { id: true } });
+      notifyUserIds = allUsers.map((u) => u.id).filter((id) => id !== auth.user.id);
+    }
+
+    if (notifyUserIds.length > 0) {
+      await prisma.notification.createMany({
+        data: notifyUserIds.map((userId) => ({
+          userId,
+          taskId: t.id,
+          message,
+          type: "TASK_DONE"
+        }))
+      });
+    }
+  }
+
   return json(t);
 }
 

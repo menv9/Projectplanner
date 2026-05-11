@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import type { Category, Filters, Priority, Project, Status, Task, User } from "@/types";
@@ -24,6 +24,7 @@ const fetchJson = async <T,>(url: string): Promise<T> => {
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const qc = useQueryClient();
   const [filters, setFilters] = useState<Filters>({});
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function Home() {
   const [viewingArchive, setViewingArchive] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
+  const [doneCollapsed, setDoneCollapsed] = useState(true);
   const [composeCollapsed, setComposeCollapsed] = useState(false);
 
   useEffect(() => {
@@ -86,18 +88,14 @@ export default function Home() {
 
   // Handle deep-linking from notifications
   useEffect(() => {
-    const sp = new URLSearchParams(window.location.search);
-    const urlProjectId = sp.get("projectId");
-    const urlTaskId = sp.get("taskId");
+    const urlProjectId = searchParams.get("projectId");
+    const urlTaskId = searchParams.get("taskId");
+    if (!urlProjectId && !urlTaskId) return;
 
-    if (urlProjectId || urlTaskId) {
-      setViewingTrash(false);
-      setViewingArchive(false);
-    }
+    setViewingTrash(false);
+    setViewingArchive(false);
 
-    if (urlProjectId) {
-      setActiveProjectId(urlProjectId);
-    }
+    if (urlProjectId) setActiveProjectId(urlProjectId);
 
     if (urlTaskId) {
       fetchJson<Task>(`/api/tasks/${urlTaskId}`)
@@ -105,10 +103,8 @@ export default function Home() {
         .catch(() => {});
     }
 
-    if (urlProjectId || urlTaskId) {
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [searchParams]);
 
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
@@ -188,18 +184,14 @@ export default function Home() {
     qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
   }, [qc]);
 
-  const today = new Date();
-
   return (
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="eyebrow mb-0.5 hidden sm:block">Volume 01 — {today.getFullYear()}</div>
-            <h1 className="font-display text-[1.4rem] sm:text-[2rem] lg:text-[2.4rem] leading-[0.95] tracking-tightish truncate">
-              <span className="display-italic text-vermilion">Atelier</span>
-              <span className="text-ink">.</span>
-              <span className="font-display text-ink hidden sm:inline"> Project Planner</span>
+          <div className="min-w-0 flex flex-col gap-1">
+            <span className="eyebrow text-ash">Atelier · Project Planner</span>
+            <h1 className="font-sans text-[1.4rem] sm:text-[1.7rem] font-medium leading-[1.1] tracking-tight text-ink truncate">
+              {activeProject?.name || "All projects"}
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -391,13 +383,7 @@ export default function Home() {
             <>
               {activeProject ? (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="eyebrow mb-1">Now reading</div>
-                    <h2 className="font-display text-[1.6rem] sm:text-[2.2rem] lg:text-[2.6rem] leading-[0.95] tracking-tightish truncate">
-                      {activeProject.name}
-                    </h2>
-                  </div>
-                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 flex-shrink-0 sm:ml-auto">
                     <button
                       className="btn-accent lg:hidden"
                       onClick={() => setShowAddModal(true)}
@@ -454,8 +440,8 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
+                  </div>
                 </div>
-              </div>
               ) : (
                 <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
@@ -485,7 +471,9 @@ export default function Home() {
 
               {tasks.data && tasks.data.length > 0 && taskView === "cards" && (() => {
                 const attentionTasks = tasks.data.filter((t) => t.attention);
-                const regularTasks = tasks.data.filter((t) => !t.attention);
+                const nonAttention = tasks.data.filter((t) => !t.attention);
+                const regularTasks = nonAttention.filter((t) => t.status.name.toLowerCase() !== "done");
+                const doneTasks = nonAttention.filter((t) => t.status.name.toLowerCase() === "done");
                 return (
                   <div className="space-y-6">
                     {attentionTasks.length > 0 && (
@@ -512,13 +500,30 @@ export default function Home() {
                         ))}
                       </div>
                     )}
+                    {doneTasks.length > 0 && (
+                      <DoneSection
+                        count={doneTasks.length}
+                        collapsed={doneCollapsed}
+                        onToggle={() => setDoneCollapsed((v) => !v)}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {doneTasks.map((t) => (
+                            <div key={t.id} className="relative hover:z-10">
+                              <TaskCard task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                            </div>
+                          ))}
+                        </div>
+                      </DoneSection>
+                    )}
                   </div>
                 );
               })()}
 
               {tasks.data && tasks.data.length > 0 && taskView === "lines" && (() => {
                 const attentionTasks = tasks.data.filter((t) => t.attention);
-                const regularTasks = tasks.data.filter((t) => !t.attention);
+                const nonAttention = tasks.data.filter((t) => !t.attention);
+                const regularTasks = nonAttention.filter((t) => t.status.name.toLowerCase() !== "done");
+                const doneTasks = nonAttention.filter((t) => t.status.name.toLowerCase() === "done");
                 return (
                   <div className="space-y-6">
                     {attentionTasks.length > 0 && (
@@ -545,6 +550,21 @@ export default function Home() {
                         ))}
                       </div>
                     )}
+                    {doneTasks.length > 0 && (
+                      <DoneSection
+                        count={doneTasks.length}
+                        collapsed={doneCollapsed}
+                        onToggle={() => setDoneCollapsed((v) => !v)}
+                      >
+                        <div className="space-y-2">
+                          {doneTasks.map((t) => (
+                            <div key={t.id} className="relative hover:z-10">
+                              <TaskRow task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                            </div>
+                          ))}
+                        </div>
+                      </DoneSection>
+                    )}
                   </div>
                 );
               })()}
@@ -560,6 +580,8 @@ export default function Home() {
                   onOptimisticPatch={patchTaskCache}
                   attentionCollapsed={attentionCollapsed}
                   onToggleAttention={() => setAttentionCollapsed((v) => !v)}
+                  doneCollapsed={doneCollapsed}
+                  onToggleDone={() => setDoneCollapsed((v) => !v)}
                 />
               )}
 
@@ -670,7 +692,51 @@ function AttentionSection({
         </span>
         {collapsed ? <ChevronDown size={14} className="text-vermilion" /> : <ChevronUp size={14} className="text-vermilion" />}
       </button>
-      {!collapsed && <div className="px-4 pb-4">{children}</div>}
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: collapsed ? "0fr" : "1fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 pb-4">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DoneSection({
+  count,
+  collapsed,
+  onToggle,
+  children
+}: {
+  count: number;
+  collapsed: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-md border border-rule bg-soft/40">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] flex-shrink-0" />
+          <span className="eyebrow text-ash">Done</span>
+          <span className="numeral text-[11px] text-ash">{String(count).padStart(2, "0")}</span>
+        </span>
+        {collapsed ? <ChevronDown size={14} className="text-ash" /> : <ChevronUp size={14} className="text-ash" />}
+      </button>
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-out"
+        style={{ gridTemplateRows: collapsed ? "0fr" : "1fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 pb-4">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

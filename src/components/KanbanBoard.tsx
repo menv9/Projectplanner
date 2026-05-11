@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
-import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
@@ -19,7 +19,9 @@ function KanbanBoardInner({
   onUpdated,
   onOptimisticPatch,
   attentionCollapsed = false,
-  onToggleAttention
+  onToggleAttention,
+  doneCollapsed = false,
+  onToggleDone
 }: {
   tasks: Task[];
   statuses: Status[];
@@ -30,6 +32,8 @@ function KanbanBoardInner({
   onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
   attentionCollapsed?: boolean;
   onToggleAttention?: () => void;
+  doneCollapsed?: boolean;
+  onToggleDone?: () => void;
 }) {
   const [items, setItems] = useState(tasks);
 
@@ -185,24 +189,80 @@ function KanbanBoardInner({
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {columnStatuses.map((status) => (
-            <div
-              key={status.id}
-              className="bg-cream/60 border border-rule rounded-md p-4 relative flex flex-col h-full"
-              style={{ minHeight: 320 }}
-            >
-              <div className="relative z-[1] flex flex-col h-full">
-                <StatusColumn
-                  status={status}
-                  tasks={grouped.byStatus.get(status.id) || []}
-                  statuses={statuses}
-                  onTaskClick={onTaskClick}
-                  onUpdated={onUpdated}
-                onOptimisticPatch={onOptimisticPatch}
-                />
+          {columnStatuses.map((status) => {
+            const isDone = normalizeName(status.name) === "done";
+            const columnTasks = grouped.byStatus.get(status.id) || [];
+            const collapsed = isDone && doneCollapsed;
+            return (
+              <div
+                key={status.id}
+                className="bg-cream/60 border border-rule rounded-md p-4 relative flex flex-col h-full"
+                style={{ minHeight: 320 }}
+              >
+                <div className="relative z-[1] flex flex-col h-full">
+                  {isDone ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onToggleDone}
+                        className="w-full flex items-center justify-between gap-2 text-left mb-3"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ background: status.color || "#9a9081" }}
+                          />
+                          <span className="eyebrow truncate">{status.name}</span>
+                          <span className="numeral text-[11px] text-ash">{columnTasks.length}</span>
+                        </span>
+                        {collapsed ? <ChevronDown size={14} className="text-ash" /> : <ChevronUp size={14} className="text-ash" />}
+                      </button>
+                      {!collapsed ? (
+                        <div key="open" className="rise-in flex flex-col flex-1">
+                          <StatusColumn
+                            status={status}
+                            tasks={columnTasks}
+                            statuses={statuses}
+                            onTaskClick={onTaskClick}
+                            onUpdated={onUpdated}
+                            onOptimisticPatch={onOptimisticPatch}
+                            hideHeader
+                          />
+                        </div>
+                      ) : (
+                        <Droppable droppableId={status.id}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className="rise-in flex-1 rounded-md border border-dashed border-rule text-[12px] text-ash flex items-center justify-center transition-colors"
+                              style={{
+                                background: snapshot.isDraggingOver
+                                  ? "rgba(var(--soft-rgb), 0.5)"
+                                  : "transparent"
+                              }}
+                            >
+                              {snapshot.isDraggingOver ? "Drop to mark done" : "Drop here"}
+                              <span style={{ display: "none" }}>{provided.placeholder}</span>
+                            </div>
+                          )}
+                        </Droppable>
+                      )}
+                    </>
+                  ) : (
+                    <StatusColumn
+                      status={status}
+                      tasks={columnTasks}
+                      statuses={statuses}
+                      onTaskClick={onTaskClick}
+                      onUpdated={onUpdated}
+                      onOptimisticPatch={onOptimisticPatch}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </DragDropContext>
