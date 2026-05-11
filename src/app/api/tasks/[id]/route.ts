@@ -63,8 +63,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await ensureAuth();
   if (auth.error) return auth.error;
-  const { ok } = await canAccessTask(params.id, auth.user.id);
-  if (!ok) return bad("Not found", 404);
+  const { task: prev, ok } = await canAccessTask(params.id, auth.user.id);
+  if (!ok || !prev) return bad("Not found", 404);
 
   const parsed = Patch.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return bad("Invalid input");
@@ -108,6 +108,39 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     },
     include
   });
+
+  // Notify on attention flag transition (false -> true)
+  if (d.attention === true && prev.attention === false) {
+    const project = prev.project;
+    const noteSuffix = t.attentionNote ? `: "${t.attentionNote}"` : "";
+    const message = `'${t.title}' marcada como atención${noteSuffix}`;
+    let notifyUserIds: string[] = [];
+
+    if (project.teamId) {
+      const members = await prisma.teamMember.findMany({
+        where: { teamId: project.teamId },
+        select: { userId: true }
+      });
+      notifyUserIds = members.map((m) => m.userId).filter((id) => id !== auth.user.id);
+    } else if (project.ownerId && project.ownerId !== auth.user.id) {
+      notifyUserIds = [project.ownerId];
+    } else if (!project.ownerId && !project.teamId) {
+      const allUsers = await prisma.user.findMany({ select: { id: true } });
+      notifyUserIds = allUsers.map((u) => u.id).filter((id) => id !== auth.user.id);
+    }
+
+    if (notifyUserIds.length > 0) {
+      await prisma.notification.createMany({
+        data: notifyUserIds.map((userId) => ({
+          userId,
+          taskId: t.id,
+          message,
+          type: "TASK_ATTENTION"
+        }))
+      });
+    }
+  }
+
   return json(t);
 }
 

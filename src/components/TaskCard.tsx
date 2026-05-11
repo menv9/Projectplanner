@@ -119,13 +119,16 @@ function StatusHoverTrigger({
 }
 
 function AttentionBadge({ note }: { note: string | null }) {
+  const hasNote = !!note;
   return (
-    <div className="absolute right-0 top-0 z-30 group/attn">
-      <div className="w-0 h-0 border-t-[14px] border-l-[14px] border-t-vermilion border-l-transparent" />
-      <div className="absolute top-0 right-0 w-5 h-5" />
-      <div className="absolute right-5 top-0 opacity-0 invisible group-hover/attn:opacity-100 group-hover/attn:visible transition-all duration-150 bg-paper border border-vermilion/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.18)] rounded-md px-3 py-2 min-w-[160px] max-w-[260px] z-40 pointer-events-none">
+    <div className="absolute right-2 top-2 z-30 group/attn">
+      <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-vermilion text-white text-[10px] font-semibold uppercase tracking-wide shadow-sm">
+        <AlertCircle size={11} strokeWidth={2.5} />
+        {hasNote ? <span className="pr-0.5">Note</span> : null}
+      </div>
+      <div className="absolute right-0 top-full mt-1 opacity-0 invisible group-hover/attn:opacity-100 group-hover/attn:visible transition-all duration-150 bg-paper border border-vermilion/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.18)] rounded-md px-3 py-2 min-w-[180px] max-w-[280px] z-40 pointer-events-none">
         <div className="text-[10px] uppercase tracking-wide text-vermilion font-semibold mb-0.5">Attention</div>
-        <div className="text-[12px] text-ink leading-snug">
+        <div className="text-[12px] text-ink leading-snug whitespace-pre-wrap">
           {note || "No note"}
         </div>
       </div>
