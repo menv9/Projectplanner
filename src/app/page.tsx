@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ChevronDown, ChevronUp, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,6 +33,16 @@ export default function Home() {
   const [viewingArchive, setViewingArchive] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
+  const [composeCollapsed, setComposeCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("composeCollapsed");
+    if (saved === "true") setComposeCollapsed(true);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("composeCollapsed", String(composeCollapsed));
+  }, [composeCollapsed]);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
@@ -218,16 +228,40 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 lg:gap-10">
+      <main className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 ${composeCollapsed ? "lg:grid-cols-[40px_1fr]" : "lg:grid-cols-[380px_1fr]"} gap-6 lg:gap-10`}>
         {me.data && (
           <div className="hidden lg:block">
-            <NewTaskPanel
-              opts={opts}
-              currentUserId={me.data.id}
-              ready={ready}
-              lockedProjectId={activeProjectId}
-              onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
-            />
+            {composeCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setComposeCollapsed(false)}
+                className="paper-card w-10 py-3 flex flex-col items-center gap-2 hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)] transition sticky top-28"
+                title="Expand compose panel"
+                aria-label="Expand compose panel"
+              >
+                <ChevronRight size={14} />
+                <span className="eyebrow [writing-mode:vertical-rl] rotate-180 tracking-widest">Compose</span>
+              </button>
+            ) : (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setComposeCollapsed(true)}
+                  className="absolute -right-3 top-3 z-10 btn-ghost !p-1 bg-paper border border-rule rounded-full shadow-sm"
+                  title="Collapse compose panel"
+                  aria-label="Collapse compose panel"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <NewTaskPanel
+                  opts={opts}
+                  currentUserId={me.data.id}
+                  ready={ready}
+                  lockedProjectId={activeProjectId}
+                  onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                />
+              </div>
+            )}
           </div>
         )}
 
