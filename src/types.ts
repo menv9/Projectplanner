@@ -36,6 +36,8 @@ export type Task = {
   status: Status;
   location: string | null;
   category: Category | null;
+  attention: boolean;
+  attentionNote: string | null;
 };
 
 export type NotificationItem = {
@@ -61,4 +63,5 @@ export type Filters = {
   from?: string;
   to?: string;
   q?: string;
+  attention?: boolean;
 };

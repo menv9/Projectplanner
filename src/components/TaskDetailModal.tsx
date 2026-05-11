@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
+import { AlertCircle, Archive, ArchiveRestore, Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
 
 type Opts = {
@@ -22,6 +22,8 @@ type Form = {
   dueDate: string;
   location: string;
   notes: string;
+  attention: boolean;
+  attentionNote: string;
 };
 
 const toDateInput = (date: string | null) => {
@@ -61,7 +63,9 @@ export function TaskDetailModal({
       categoryId: task.category?.id || "",
       dueDate: toDateInput(task.dueDate),
       location: task.location || "",
-      notes: task.notes || ""
+      notes: task.notes || "",
+      attention: task.attention,
+      attentionNote: task.attentionNote || ""
     });
     setError(null);
   }, [task]);
@@ -94,7 +98,9 @@ export function TaskDetailModal({
           priorityId: form.priorityId,
           statusId: form.statusId,
           categoryId: form.categoryId || null,
-          location: form.location.trim() || null
+          location: form.location.trim() || null,
+          attention: form.attention,
+          attentionNote: form.attention ? (form.attentionNote.trim() || null) : null
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -210,6 +216,29 @@ export function TaskDetailModal({
             <Select label="Author" value={form.authorId} onChange={(v) => set("authorId", v)} options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
             <Select label="Priority" value={form.priorityId} onChange={(v) => set("priorityId", v)} options={opts.priorities} />
             <StatusPills value={form.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
+            <div className="block min-w-0 sm:col-span-2">
+              <span className="text-[11px] text-ash block mb-2">Flag</span>
+              <button
+                type="button"
+                onClick={() => set("attention", !form.attention)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs transition"
+                style={form.attention
+                  ? { background: "rgb(var(--vermilion-rgb))", borderColor: "rgb(var(--vermilion-rgb))", color: "#fff" }
+                  : { borderColor: "rgb(var(--vermilion-rgb))", color: "rgb(var(--vermilion-rgb))" }}
+              >
+                <AlertCircle size={13} />
+                {form.attention ? "Attention" : "Mark as Attention"}
+              </button>
+              {form.attention && (
+                <input
+                  className="input !text-[13px] mt-2"
+                  placeholder="Why does this need attention? (shown as tooltip)"
+                  value={form.attentionNote}
+                  onChange={(e) => set("attentionNote", e.target.value)}
+                  maxLength={200}
+                />
+              )}
+            </div>
             <Select label="Category" value={form.categoryId} onChange={(v) => set("categoryId", v)} options={opts.categories} emptyLabel="None" />
 
             <label className="block">

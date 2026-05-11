@@ -11,13 +11,17 @@ function StatusColumnInner({
   tasks,
   statuses,
   onTaskClick,
-  onUpdated
+  onUpdated,
+  horizontal = false,
+  onOptimisticPatch
 }: {
   status: Status;
   tasks: Task[];
   statuses: Status[];
   onTaskClick?: (task: Task) => void;
   onUpdated?: () => void;
+  onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
+  horizontal?: boolean;
 }) {
   const [query, setQuery] = useState("");
 
@@ -56,12 +60,16 @@ function StatusColumnInner({
         </label>
       </div>
 
-      <Droppable droppableId={status.id}>
+      <Droppable droppableId={status.id} direction={horizontal ? "horizontal" : "vertical"}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className="flex-1 min-h-[120px] space-y-3 transition-colors rounded-md p-2 -mx-2"
+            className={
+              horizontal
+                ? "min-h-[120px] grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 transition-colors rounded-md p-2 -mx-2"
+                : "flex-1 min-h-[120px] space-y-3 transition-colors rounded-md p-2 -mx-2"
+            }
             style={{
               background: snapshot.isDraggingOver
                 ? "rgba(var(--soft-rgb), 0.35)"
@@ -85,6 +93,7 @@ function StatusColumnInner({
                       statuses={statuses}
                       onClick={() => onTaskClick?.(task)}
                       onUpdated={onUpdated}
+                      onOptimisticPatch={onOptimisticPatch}
                       interactive={false}
                     />
                   </div>

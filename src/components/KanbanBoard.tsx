@@ -7,19 +7,24 @@ import type { Status, Task } from "@/types";
 import { StatusColumn } from "./StatusColumn";
 
 const normalizeName = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+const ATTENTION_COLUMN_ID = "__attention";
 
 function KanbanBoardInner({
   tasks,
   statuses,
   onTaskMove,
+  onTaskAttention,
   onTaskClick,
-  onUpdated
+  onUpdated,
+  onOptimisticPatch
 }: {
   tasks: Task[];
   statuses: Status[];
   onTaskMove?: (taskId: string, newStatusId: string) => void | Promise<void>;
+  onTaskAttention?: (taskId: string, attention: boolean, newStatusId?: string) => void | Promise<void>;
   onTaskClick?: (task: Task) => void;
   onUpdated?: () => void;
+  onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
 }) {
   const [items, setItems] = useState(tasks);
 
@@ -39,8 +44,8 @@ function KanbanBoardInner({
     setItems((prev) => {
       if (prev === tasks) return prev;
       if (prev.length !== tasks.length) return tasks;
-      const sameOrder = prev.every((t, i) => t.id === tasks[i].id);
-      return sameOrder ? prev : tasks;
+      const same = prev.every((t, i) => t === tasks[i]);
+      return same ? prev : tasks;
     });
   }, [tasks]);
 
@@ -52,10 +57,36 @@ function KanbanBoardInner({
       if (sourceId === destId) return;
 
       const taskId = result.draggableId;
+      const previousItems = items;
+
+      // Dropping INTO the Attention column → flag the task, keep status.
+      if (destId === ATTENTION_COLUMN_ID) {
+        flushSync(() => {
+          setItems((prev) =>
+            prev.map((t) => (t.id === taskId ? { ...t, attention: true } : t))
+          );
+        });
+        const p = onTaskAttention?.(taskId, true);
+        if (p) p.catch(() => setItems(previousItems));
+        return;
+      }
+
+      // Dropping OUT of Attention → unflag and (also) move to destination status.
       const newStatus = statuses.find((s) => s.id === destId);
       if (!newStatus) return;
 
-      const previousItems = items;
+      if (sourceId === ATTENTION_COLUMN_ID) {
+        flushSync(() => {
+          setItems((prev) =>
+            prev.map((t) =>
+              t.id === taskId ? { ...t, attention: false, status: newStatus } : t
+            )
+          );
+        });
+        const p = onTaskAttention?.(taskId, false, destId);
+        if (p) p.catch(() => setItems(previousItems));
+        return;
+      }
 
       flushSync(() => {
         setItems((prev) =>
@@ -72,7 +103,7 @@ function KanbanBoardInner({
         });
       }
     },
-    [onTaskMove, statuses, items]
+    [onTaskMove, onTaskAttention, statuses, items]
   );
 
   const columnStatuses = useMemo(
@@ -81,43 +112,74 @@ function KanbanBoardInner({
   );
 
   // Group tasks by matching status NAME instead of status ID.
-  // This fixes the migration issue where tasks reference old status IDs.
+  // Attention-flagged tasks are routed to a synthetic column and excluded from status columns.
   const grouped = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const s of statuses) {
       map.set(s.id, []);
     }
+    const attention: Task[] = [];
     for (const t of items) {
-      // Try to match by the task's status name to the current user's statuses
+      if (t.attention) {
+        attention.push(t);
+        continue;
+      }
       const currentStatus = statusByName.get(normalizeName(t.status.name));
       if (currentStatus) {
         const list = map.get(currentStatus.id);
         if (list) list.push(t);
       }
     }
-    return map;
+    return { byStatus: map, attention };
   }, [items, statuses, statusByName]);
+
+  const attentionStatus: Status = useMemo(
+    () => ({ id: ATTENTION_COLUMN_ID, name: "Attention", rank: -1, color: "rgb(var(--vermilion-rgb))" }),
+    []
+  );
+
+  const hasAttention = grouped.attention.length > 0;
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {columnStatuses.map((status) => (
+      <div className="space-y-6">
+        {hasAttention && (
           <div
-            key={status.id}
-            className="bg-cream/60 border border-rule rounded-md p-4 relative flex flex-col h-full"
-            style={{ minHeight: 320 }}
+            className="border border-vermilion/40 bg-vermilion/[0.04] rounded-md p-4 relative flex flex-col"
           >
-            <div className="relative z-[1] flex flex-col h-full">
+            <div className="relative z-[1] flex flex-col">
               <StatusColumn
-                status={status}
-                tasks={grouped.get(status.id) || []}
+                status={attentionStatus}
+                tasks={grouped.attention}
                 statuses={statuses}
                 onTaskClick={onTaskClick}
                 onUpdated={onUpdated}
+                onOptimisticPatch={onOptimisticPatch}
+                horizontal
               />
             </div>
           </div>
-        ))}
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {columnStatuses.map((status) => (
+            <div
+              key={status.id}
+              className="bg-cream/60 border border-rule rounded-md p-4 relative flex flex-col h-full"
+              style={{ minHeight: 320 }}
+            >
+              <div className="relative z-[1] flex flex-col h-full">
+                <StatusColumn
+                  status={status}
+                  tasks={grouped.byStatus.get(status.id) || []}
+                  statuses={statuses}
+                  onTaskClick={onTaskClick}
+                  onUpdated={onUpdated}
+                onOptimisticPatch={onOptimisticPatch}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </DragDropContext>
   );

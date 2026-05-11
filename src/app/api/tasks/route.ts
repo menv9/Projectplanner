@@ -13,7 +13,8 @@ const Create = z.object({
   priorityId: z.string().min(1),
   statusId: z.string().min(1),
   categoryId: z.string().optional().nullable(),
-  location: z.string().optional().nullable()
+  location: z.string().optional().nullable(),
+  attention: z.boolean().optional()
 });
 
 export async function GET(req: NextRequest) {
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
   set("statusId", sp.get("statusId"));
   set("authorId", sp.get("authorId"));
   set("categoryId", sp.get("categoryId"));
+  if (sp.get("attention") === "true") where.attention = true;
   const from = sp.get("from"), to = sp.get("to");
   if (from || to) {
     where.dueDate = {};
@@ -141,7 +143,8 @@ export async function POST(req: NextRequest) {
       priorityId: data.priorityId,
       statusId: data.statusId,
       categoryId: data.categoryId || null,
-      location: data.location || null
+      location: data.location || null,
+      attention: data.attention ?? false
     },
     include: { project: true, priority: true, status: true, category: true, author: { select: { id: true, username: true } } }
   });

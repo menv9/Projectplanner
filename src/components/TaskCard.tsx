@@ -2,30 +2,40 @@
 import { memo, useEffect, useState } from "react";
 import type { Status, Task } from "@/types";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, MapPin } from "lucide-react";
+import { AlertCircle, Archive, ArchiveRestore, MapPin } from "lucide-react";
 
 function StatusHoverTrigger({
   task,
   statuses,
-  onUpdated
+  onUpdated,
+  onOptimisticPatch
 }: {
   task: Task;
   statuses: Status[];
   onUpdated?: () => void;
+  onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [optimisticStatusId, setOptimisticStatusId] = useState<string | null>(null);
+  const [optimisticAttention, setOptimisticAttention] = useState<boolean | null>(null);
 
   const effectiveStatusId = optimisticStatusId ?? task.status.id;
   const effectiveStatus = statuses.find((s) => s.id === effectiveStatusId) || task.status;
+  const effectiveAttention = optimisticAttention ?? task.attention;
 
   useEffect(() => {
     setOptimisticStatusId(null);
   }, [task.status.id]);
 
+  useEffect(() => {
+    setOptimisticAttention(null);
+  }, [task.attention]);
+
   const changeStatus = async (statusId: string) => {
     if (statusId === task.status.id) return;
+    const targetStatus = statuses.find((s) => s.id === statusId);
     setOptimisticStatusId(statusId);
+    if (targetStatus) onOptimisticPatch?.(task.id, { status: targetStatus });
     setBusy(true);
     try {
       const r = await fetch(`/api/tasks/${task.id}`, {
@@ -37,9 +47,36 @@ function StatusHoverTrigger({
         onUpdated?.();
       } else {
         setOptimisticStatusId(null);
+        onOptimisticPatch?.(task.id, { status: task.status });
       }
     } catch {
       setOptimisticStatusId(null);
+      onOptimisticPatch?.(task.id, { status: task.status });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleAttention = async () => {
+    const next = !effectiveAttention;
+    setOptimisticAttention(next);
+    onOptimisticPatch?.(task.id, { attention: next });
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ attention: next })
+      });
+      if (r.ok) {
+        onUpdated?.();
+      } else {
+        setOptimisticAttention(null);
+        onOptimisticPatch?.(task.id, { attention: task.attention });
+      }
+    } catch {
+      setOptimisticAttention(null);
+      onOptimisticPatch?.(task.id, { attention: task.attention });
     } finally {
       setBusy(false);
     }
@@ -64,16 +101,44 @@ function StatusHoverTrigger({
             <span className={s.id === effectiveStatusId ? "font-semibold text-ink" : "text-ash"}>{s.name}</span>
           </button>
         ))}
+        <div className="border-t border-rule my-1" />
+        <button
+          type="button"
+          className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-black/5 disabled:opacity-50"
+          disabled={busy}
+          onClick={(e) => { e.stopPropagation(); toggleAttention(); }}
+        >
+          <AlertCircle size={11} className="text-vermilion flex-shrink-0" />
+          <span className={effectiveAttention ? "font-semibold text-vermilion" : "text-ash"}>
+            {effectiveAttention ? "Unflag Attention" : "Flag Attention"}
+          </span>
+        </button>
       </div>
     </div>
   );
 }
 
-function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interactive = true }: {
+function AttentionBadge({ note }: { note: string | null }) {
+  return (
+    <div className="absolute right-0 top-0 z-30 group/attn">
+      <div className="w-0 h-0 border-t-[14px] border-l-[14px] border-t-vermilion border-l-transparent" />
+      <div className="absolute top-0 right-0 w-5 h-5" />
+      <div className="absolute right-5 top-0 opacity-0 invisible group-hover/attn:opacity-100 group-hover/attn:visible transition-all duration-150 bg-paper border border-vermilion/40 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.18)] rounded-md px-3 py-2 min-w-[160px] max-w-[260px] z-40 pointer-events-none">
+        <div className="text-[10px] uppercase tracking-wide text-vermilion font-semibold mb-0.5">Attention</div>
+        <div className="text-[12px] text-ink leading-snug">
+          {note || "No note"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskCardInner({ task, statuses, onClick, onUpdated, onOptimisticPatch, onArchive, interactive = true }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
   onUpdated?: () => void;
+  onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
   onArchive?: (taskId: string, archive: boolean) => void;
   interactive?: boolean;
 }) {
@@ -137,7 +202,8 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interact
 
   return (
     <div className="relative w-full">
-      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
+      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} onOptimisticPatch={onOptimisticPatch} />
+      {task.attention && <AttentionBadge note={task.attentionNote} />}
       {interactive ? (
         <button
           onClick={onClick}
@@ -159,18 +225,20 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onArchive, interact
   );
 }
 
-function TaskRowInner({ task, statuses, onClick, onUpdated, onArchive }: {
+function TaskRowInner({ task, statuses, onClick, onUpdated, onOptimisticPatch, onArchive }: {
   task: Task;
   statuses: Status[];
   onClick?: () => void;
   onUpdated?: () => void;
+  onOptimisticPatch?: (taskId: string, patch: Partial<Task>) => void;
   onArchive?: (taskId: string, archive: boolean) => void;
 }) {
   const due = task.dueDate ? new Date(task.dueDate) : null;
 
   return (
     <div className="relative w-full">
-      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} />
+      <StatusHoverTrigger task={task} statuses={statuses} onUpdated={onUpdated} onOptimisticPatch={onOptimisticPatch} />
+      {task.attention && <AttentionBadge note={task.attentionNote} />}
       <button
         onClick={onClick}
         className="paper-card text-left px-3 py-2 pl-5 w-full transition hover:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.16)] focus:outline-none focus:ring-2 focus:ring-black/10"

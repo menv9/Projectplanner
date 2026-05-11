@@ -1,6 +1,6 @@
 "use client";
 import type { Category, Filters, Priority, Status, User } from "@/types";
-import { Search, X } from "lucide-react";
+import { AlertCircle, Search, X } from "lucide-react";
 
 type Opts = {
   priorities: Priority[]; statuses: Status[]; categories: Category[]; users: User[];
@@ -9,8 +9,8 @@ type Opts = {
 export function FilterBar({
   filters, setFilters, opts
 }: { filters: Filters; setFilters: (f: Filters) => void; opts: Opts }) {
-  const set = (k: keyof Filters, v: string) => {
-    const next = { ...filters };
+  const set = (k: Exclude<keyof Filters, "attention">, v: string) => {
+    const next: Filters = { ...filters };
     if (!v) delete next[k]; else next[k] = v;
     setFilters(next);
   };
@@ -28,6 +28,24 @@ export function FilterBar({
         )}
       </div>
       <StatusPills value={filters.statusId} onChange={(v) => set("statusId", v)} options={opts.statuses} />
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => {
+            const next = { ...filters };
+            if (filters.attention) delete next.attention;
+            else next.attention = true;
+            setFilters(next);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs transition"
+          style={filters.attention
+            ? { background: "rgb(var(--vermilion-rgb))", borderColor: "rgb(var(--vermilion-rgb))", color: "#fff" }
+            : { borderColor: "rgb(var(--vermilion-rgb))", color: "rgb(var(--vermilion-rgb))" }}
+        >
+          <AlertCircle size={11} />
+          Attention only
+        </button>
+      </div>
       <div className="flex flex-wrap items-end gap-2 mb-2">
         <div className="min-w-[140px] flex-1">
           <label className="relative block">

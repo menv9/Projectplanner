@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,7 @@ export default function Home() {
   const [viewingTrash, setViewingTrash] = useState(false);
   const [viewingArchive, setViewingArchive] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [attentionCollapsed, setAttentionCollapsed] = useState(false);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
@@ -101,7 +102,10 @@ export default function Home() {
 
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
-    Object.entries(filters).forEach(([k, v]) => v && sp.set(k, v));
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v === undefined || v === null || v === false || v === "") return;
+      sp.set(k, String(v));
+    });
     if (activeProjectId) sp.set("projectId", activeProjectId);
     return sp.toString();
   }, [filters, activeProjectId]);
@@ -134,6 +138,13 @@ export default function Home() {
     router.refresh();
   };
 
+  const patchTaskCache = useCallback((taskId: string, patch: Partial<Task>) => {
+    qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+      if (!old) return old;
+      return old.map((t) => (t.id === taskId ? { ...t, ...patch } : t));
+    });
+  }, [qc]);
+
   const handleTaskMove = useCallback(async (taskId: string, newStatusId: string) => {
     const r = await fetch(`/api/tasks/${taskId}`, {
       method: "PATCH",
@@ -141,6 +152,18 @@ export default function Home() {
       body: JSON.stringify({ statusId: newStatusId })
     });
     if (!r.ok) throw new Error("Failed to move task");
+    qc.invalidateQueries({ queryKey: ["tasks"] });
+  }, [qc]);
+
+  const handleTaskAttention = useCallback(async (taskId: string, attention: boolean, newStatusId?: string) => {
+    const body: { attention: boolean; statusId?: string } = { attention };
+    if (newStatusId) body.statusId = newStatusId;
+    const r = await fetch(`/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error("Failed to update attention");
     qc.invalidateQueries({ queryKey: ["tasks"] });
   }, [qc]);
 
@@ -405,33 +428,81 @@ export default function Home() {
                 </div>
               )}
 
-              {tasks.data && tasks.data.length > 0 && taskView === "cards" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {tasks.data.map((t, i) => (
-                    <div key={t.id} className="rise-in relative hover:z-10" style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}>
-                      <TaskCard task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {tasks.data && tasks.data.length > 0 && taskView === "cards" && (() => {
+                const attentionTasks = tasks.data.filter((t) => t.attention);
+                const regularTasks = tasks.data.filter((t) => !t.attention);
+                return (
+                  <div className="space-y-6">
+                    {attentionTasks.length > 0 && (
+                      <AttentionSection
+                        count={attentionTasks.length}
+                        collapsed={attentionCollapsed}
+                        onToggle={() => setAttentionCollapsed((v) => !v)}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {attentionTasks.map((t) => (
+                            <div key={t.id} className="relative hover:z-10">
+                              <TaskCard task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                            </div>
+                          ))}
+                        </div>
+                      </AttentionSection>
+                    )}
+                    {regularTasks.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {regularTasks.map((t, i) => (
+                          <div key={t.id} className="rise-in relative hover:z-10" style={{ animationDelay: `${Math.min(i * 35, 280)}ms` }}>
+                            <TaskCard task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
-              {tasks.data && tasks.data.length > 0 && taskView === "lines" && (
-                <div className="space-y-2">
-                  {tasks.data.map((t, i) => (
-                    <div key={t.id} className="rise-in relative hover:z-10" style={{ animationDelay: `${Math.min(i * 20, 180)}ms` }}>
-                      <TaskRow task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {tasks.data && tasks.data.length > 0 && taskView === "lines" && (() => {
+                const attentionTasks = tasks.data.filter((t) => t.attention);
+                const regularTasks = tasks.data.filter((t) => !t.attention);
+                return (
+                  <div className="space-y-6">
+                    {attentionTasks.length > 0 && (
+                      <AttentionSection
+                        count={attentionTasks.length}
+                        collapsed={attentionCollapsed}
+                        onToggle={() => setAttentionCollapsed((v) => !v)}
+                      >
+                        <div className="space-y-2">
+                          {attentionTasks.map((t) => (
+                            <div key={t.id} className="relative hover:z-10">
+                              <TaskRow task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                            </div>
+                          ))}
+                        </div>
+                      </AttentionSection>
+                    )}
+                    {regularTasks.length > 0 && (
+                      <div className="space-y-2">
+                        {regularTasks.map((t, i) => (
+                          <div key={t.id} className="rise-in relative hover:z-10" style={{ animationDelay: `${Math.min(i * 20, 180)}ms` }}>
+                            <TaskRow task={t} statuses={opts.statuses} onClick={() => setSelected(t)} onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })} onOptimisticPatch={patchTaskCache} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {tasks.data && taskView === "kanban" && (
                 <KanbanBoard
                   tasks={tasks.data}
                   statuses={opts.statuses}
                   onTaskMove={handleTaskMove}
+                  onTaskAttention={handleTaskAttention}
                   onTaskClick={(t) => setSelected(t)}
                   onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                  onOptimisticPatch={patchTaskCache}
                 />
               )}
 
@@ -494,6 +565,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Modals */}
       <TaskDetailModal
         task={selected}
         opts={opts}
@@ -512,6 +584,36 @@ export default function Home() {
           qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
         }}
       />
+    </div>
+  );
+}
+
+function AttentionSection({
+  count,
+  collapsed,
+  onToggle,
+  children
+}: {
+  count: number;
+  collapsed: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-md border border-vermilion/40 bg-vermilion/[0.04]">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-2">
+          <AlertCircle size={14} className="text-vermilion" />
+          <span className="eyebrow !text-vermilion">Attention</span>
+          <span className="numeral text-[11px] text-vermilion">{String(count).padStart(2, "0")}</span>
+        </span>
+        {collapsed ? <ChevronDown size={14} className="text-vermilion" /> : <ChevronUp size={14} className="text-vermilion" />}
+      </button>
+      {!collapsed && <div className="px-4 pb-4">{children}</div>}
     </div>
   );
 }
