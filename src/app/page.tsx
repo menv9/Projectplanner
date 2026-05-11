@@ -477,6 +477,7 @@ function Home() {
                 </div>
               )}
 
+              <div key={taskView} className="view-swap">
               {tasks.data && tasks.data.length > 0 && taskView === "cards" && (() => {
                 const attentionTasks = tasks.data.filter((t) => t.attention);
                 const nonAttention = tasks.data.filter((t) => !t.attention);
@@ -601,6 +602,7 @@ function Home() {
                   onUpdated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
                 />
               )}
+              </div>
             </>
           )}
         </section>
@@ -724,18 +726,18 @@ function DoneSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-rule bg-soft/40">
+    <div className="rounded-md border border-forest/30 bg-forest/[0.04]">
       <button
         type="button"
         onClick={onToggle}
         className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left"
       >
         <span className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] flex-shrink-0" />
-          <span className="eyebrow text-ash">Done</span>
-          <span className="numeral text-[11px] text-ash">{String(count).padStart(2, "0")}</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-forest flex-shrink-0" />
+          <span className="eyebrow !text-forest">Done</span>
+          <span className="numeral text-[11px] text-forest">{String(count).padStart(2, "0")}</span>
         </span>
-        {collapsed ? <ChevronDown size={14} className="text-ash" /> : <ChevronUp size={14} className="text-ash" />}
+        {collapsed ? <ChevronDown size={14} className="text-forest" /> : <ChevronUp size={14} className="text-forest" />}
       </button>
       <div
         className="grid transition-[grid-template-rows] duration-300 ease-out"

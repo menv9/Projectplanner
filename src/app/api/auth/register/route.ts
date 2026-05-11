@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
     { name: "High", rank: 3, color: "#ef4444" }
   ];
   const statuses = [
-    { name: "To Do", rank: 1, color: "#6b7280" },
-    { name: "Doing", rank: 2, color: "#3b82f6" },
-    { name: "Done", rank: 3, color: "#10b981" }
+    { name: "To Do", rank: 1, color: "#7a7268" },
+    { name: "Doing", rank: 2, color: "#5a7280" },
+    { name: "Done", rank: 3, color: "#2f5a3a" }
   ];
   const categories = [
     { name: "Frontend", color: "#7c5cff" },

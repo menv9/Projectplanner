@@ -6,10 +6,17 @@ import { bad, ensureAuth, json } from "@/lib/api";
 const Create = z.object({ name: z.string().min(1).max(60), rank: z.number().int().default(0), color: z.string().optional().nullable() });
 
 const DEFAULTS = [
-  { name: "To Do", rank: 1, color: "#6b7280" },
-  { name: "Doing", rank: 2, color: "#3b82f6" },
-  { name: "Done", rank: 3, color: "#10b981" }
+  { name: "To Do", rank: 1, color: "#7a7268" },
+  { name: "Doing", rank: 2, color: "#5a7280" },
+  { name: "Done", rank: 3, color: "#2f5a3a" }
 ];
+
+// Old defaults — migrated to the new muted palette in place on next load
+const OLD_TO_NEW: Record<string, string> = {
+  "#6b7280": "#7a7268",
+  "#3b82f6": "#5a7280",
+  "#10b981": "#2f5a3a"
+};
 
 export async function GET() {
   const auth = await ensureAuth(); if (auth.error) return auth.error;
@@ -18,6 +25,13 @@ export async function GET() {
   if (count === 0) {
     for (const d of DEFAULTS) {
       await prisma.status.create({ data: { ...d, ownerId: auth.user.id } }).catch(() => {});
+    }
+  } else {
+    for (const [oldColor, newColor] of Object.entries(OLD_TO_NEW)) {
+      await prisma.status.updateMany({
+        where: { ownerId: auth.user.id, color: oldColor },
+        data: { color: newColor }
+      }).catch(() => {});
     }
   }
 

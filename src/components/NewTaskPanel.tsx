@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import type { Category, Priority, Project, Status, User } from "@/types";
 import { ArrowLeft, ArrowRight, RotateCcw, Check } from "lucide-react";
 
@@ -224,6 +225,14 @@ function StepBasics({ form, setForm, opts, hideProject }: { form: Form; setForm:
         </NumberedField>
         <NumberedField num={hideProject ? "06" : "07"} label="Due">
           <input type="date" className="input" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} />
+          {form.dueDate && (() => {
+            const d = new Date(form.dueDate);
+            return isNaN(d.getTime()) ? null : (
+              <span className="block font-display italic text-[12.5px] text-ash mt-1">
+                {format(d, "d MMMM, EEEE")}
+              </span>
+            );
+          })()}
         </NumberedField>
         <NumberedField num={hideProject ? "07" : "08"} label="Task Page">
           <input
