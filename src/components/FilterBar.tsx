@@ -83,6 +83,7 @@ export function FilterBar({
             <option value="due_asc">Due date (soonest)</option>
             <option value="due_desc">Due date (latest)</option>
             <option value="priority">Priority</option>
+            <option value="status">Status</option>
             <option value="title_asc">Title (A–Z)</option>
           </select>
         </label>

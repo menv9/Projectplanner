@@ -97,6 +97,7 @@ export async function GET(req: NextRequest) {
       case "due_asc": return [{ dueDate: { sort: "asc", nulls: "last" } }, { updatedAt: "desc" }];
       case "due_desc": return [{ dueDate: { sort: "desc", nulls: "last" } }, { updatedAt: "desc" }];
       case "priority": return [{ priority: { rank: "asc" } }, { updatedAt: "desc" }];
+      case "status": return [{ status: { rank: "asc" } }, { updatedAt: "desc" }];
       case "title_asc": return [{ title: "asc" }];
       default: return [{ updatedAt: "desc" }];
     }
