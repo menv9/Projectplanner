@@ -9,9 +9,14 @@ type Opts = {
 export function FilterBar({
   filters, setFilters, opts
 }: { filters: Filters; setFilters: (f: Filters) => void; opts: Opts }) {
-  const set = (k: Exclude<keyof Filters, "attention">, v: string) => {
+  const set = (k: Exclude<keyof Filters, "attention" | "orderBy">, v: string) => {
     const next: Filters = { ...filters };
     if (!v) delete next[k]; else next[k] = v;
+    setFilters(next);
+  };
+  const setOrderBy = (v: string) => {
+    const next: Filters = { ...filters };
+    if (!v) delete next.orderBy; else next.orderBy = v as Filters["orderBy"];
     setFilters(next);
   };
   const visible: Filters = { ...filters };
@@ -66,6 +71,21 @@ export function FilterBar({
                 options={opts.users.map((u) => ({ id: u.id, name: u.username }))} />
         <DateField label="From" value={filters.from} onChange={(v) => set("from", v)} />
         <DateField label="To" value={filters.to} onChange={(v) => set("to", v)} />
+      </div>
+      <div className="mt-2">
+        <label className="block">
+          <span className="text-[11px] text-ash block mb-1">Order by</span>
+          <select className="input" value={filters.orderBy || ""} onChange={(e) => setOrderBy(e.target.value)}>
+            <option value="">Recently updated</option>
+            <option value="updated_asc">Least recently updated</option>
+            <option value="created_desc">Newest first</option>
+            <option value="created_asc">Oldest first</option>
+            <option value="due_asc">Due date (soonest)</option>
+            <option value="due_desc">Due date (latest)</option>
+            <option value="priority">Priority</option>
+            <option value="title_asc">Title (A–Z)</option>
+          </select>
+        </label>
       </div>
     </div>
   );

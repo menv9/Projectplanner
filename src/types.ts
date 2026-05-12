@@ -64,4 +64,5 @@ export type Filters = {
   to?: string;
   q?: string;
   attention?: boolean;
+  orderBy?: "updated_desc" | "updated_asc" | "created_desc" | "created_asc" | "due_asc" | "due_desc" | "priority" | "title_asc";
 };

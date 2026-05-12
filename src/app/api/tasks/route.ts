@@ -89,13 +89,26 @@ export async function GET(req: NextRequest) {
     where.projectId = { in: accessibleProjectIds };
   }
 
+  const orderBy: Prisma.TaskOrderByWithRelationInput[] = (() => {
+    switch (sp.get("orderBy")) {
+      case "updated_asc": return [{ updatedAt: "asc" }];
+      case "created_desc": return [{ createdAt: "desc" }];
+      case "created_asc": return [{ createdAt: "asc" }];
+      case "due_asc": return [{ dueDate: { sort: "asc", nulls: "last" } }, { updatedAt: "desc" }];
+      case "due_desc": return [{ dueDate: { sort: "desc", nulls: "last" } }, { updatedAt: "desc" }];
+      case "priority": return [{ priority: { rank: "asc" } }, { updatedAt: "desc" }];
+      case "title_asc": return [{ title: "asc" }];
+      default: return [{ updatedAt: "desc" }];
+    }
+  })();
+
   const tasks = await prisma.task.findMany({
     where,
     include: {
       project: true, author: { select: { id: true, username: true } },
       priority: true, status: true, category: true
     },
-    orderBy: [{ updatedAt: "desc" }]
+    orderBy
   });
   return json(tasks);
 }
