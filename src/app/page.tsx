@@ -665,6 +665,10 @@ function Home() {
         }}
         onSaved={(task) => {
           setSelected(task);
+          qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+            if (!old) return old;
+            return old.map((t) => (t.id === task.id ? task : t));
+          });
           qc.invalidateQueries({ queryKey: ["tasks"] });
         }}
         onArchive={(task) => {
