@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { AlertCircle, Archive, ArchiveRestore, Copy, Check, FileText, Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
+import { CONTEXT_BOOTSTRAP_PROMPT } from "@/lib/contextPrompt";
 
 type Opts = {
   projects: Project[];
@@ -54,6 +55,17 @@ export function TaskDetailModal({
   const [contextSaving, setContextSaving] = useState(false);
   const [contextError, setContextError] = useState<string | null>(null);
   const [contextHasValue, setContextHasValue] = useState(false);
+  const [contextPromptCopied, setContextPromptCopied] = useState(false);
+
+  const copyContextPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTEXT_BOOTSTRAP_PROMPT);
+      setContextPromptCopied(true);
+      setTimeout(() => setContextPromptCopied(false), 1500);
+    } catch {
+      // silently fail
+    }
+  };
 
   useEffect(() => {
     if (!task) {
@@ -350,6 +362,15 @@ export function TaskDetailModal({
                       Context for {task.project.name} — used by Generate to avoid hallucinated file/component names
                     </span>
                     <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={copyContextPrompt}
+                        title="Copy a prompt to paste into an AI — it will analyse your codebase and produce a context document"
+                      >
+                        {contextPromptCopied ? <Check size={13} /> : <Copy size={13} />}
+                        {contextPromptCopied ? "Copied" : "Copy context prompt"}
+                      </button>
                       <button
                         type="button"
                         className="btn-ghost"

@@ -2,8 +2,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
 import type { Category, Priority, Project, Status, Team, User } from "@/types";
+import { CONTEXT_BOOTSTRAP_PROMPT } from "@/lib/contextPrompt";
 
 const fetchJson = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url);
@@ -79,6 +80,17 @@ function ProjectsSection() {
   const [editingContext, setEditingContext] = useState<string | null>(null);
   const [contextDraft, setContextDraft] = useState("");
   const [contextSaving, setContextSaving] = useState(false);
+  const [contextPromptCopied, setContextPromptCopied] = useState(false);
+
+  const copyContextPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(CONTEXT_BOOTSTRAP_PROMPT);
+      setContextPromptCopied(true);
+      setTimeout(() => setContextPromptCopied(false), 1500);
+    } catch {
+      // silently fail
+    }
+  };
 
   const saveContext = async () => {
     if (!editingContext) return;
@@ -161,6 +173,14 @@ function ProjectsSection() {
                 <div className="flex items-center justify-between">
                   <span className="font-display text-[1.05rem]">{it.name} — Context</span>
                   <div className="flex gap-2">
+                    <button
+                      className="btn-ghost"
+                      onClick={copyContextPrompt}
+                      title="Copy a prompt to paste into an AI — it will analyse your codebase and produce a context document"
+                    >
+                      {contextPromptCopied ? <Check size={13} /> : <Copy size={13} />}
+                      {contextPromptCopied ? "Copied" : "Copy context prompt"}
+                    </button>
                     <button className="btn-primary !py-1 !px-3 text-xs" onClick={saveContext} disabled={contextSaving}>
                       {contextSaving ? "Saving…" : "Save"}
                     </button>
