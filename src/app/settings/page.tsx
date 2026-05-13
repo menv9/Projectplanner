@@ -76,6 +76,23 @@ function ProjectsSection() {
   const teams = useQuery({ queryKey: ["teams"], queryFn: () => fetchJson<Team[]>("/api/teams") });
   const [draft, setDraft] = useState({ name: "", color: "" });
   const [error, setError] = useState<string | null>(null);
+  const [editingContext, setEditingContext] = useState<string | null>(null);
+  const [contextDraft, setContextDraft] = useState("");
+  const [contextSaving, setContextSaving] = useState(false);
+
+  const saveContext = async () => {
+    if (!editingContext) return;
+    setContextSaving(true);
+    const res = await fetch(`/api/projects/${editingContext}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ context: contextDraft.trim() || null })
+    });
+    setContextSaving(false);
+    if (!res.ok) { alert("Failed to save context"); return; }
+    setEditingContext(null);
+    qc.invalidateQueries({ queryKey: ["projects"] });
+  };
 
   const add = async () => {
     setError(null);
@@ -139,32 +156,62 @@ function ProjectsSection() {
         )}
         {projects.data?.map((it) => (
           <li key={it.id}>
-            <div className="px-6 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule flex-shrink-0" style={{ background: it.color }} />}
-                <span className="font-display text-[1.05rem] truncate">{it.name}</span>
+            {editingContext === it.id ? (
+              <div className="px-6 py-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-[1.05rem]">{it.name} — Context</span>
+                  <div className="flex gap-2">
+                    <button className="btn-primary !py-1 !px-3 text-xs" onClick={saveContext} disabled={contextSaving}>
+                      {contextSaving ? "Saving…" : "Save"}
+                    </button>
+                    <button className="btn-ghost" onClick={() => setEditingContext(null)} disabled={contextSaving}>
+                      <X size={13} />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-ash">Used by the prompt generator to keep suggestions grounded — list real file names, components, conventions.</p>
+                <textarea
+                  className="input min-h-[140px] !text-[13px]"
+                  placeholder={"## Stack\nNext.js 14, Prisma, Tailwind\n\n## Key files / components\nsrc/components/TaskDetailModal.tsx — task editor\nsrc/components/ProjectFilters.tsx — project filter bar\n\n## Conventions\n- RSC by default, 'use client' when needed"}
+                  value={contextDraft}
+                  onChange={(e) => setContextDraft(e.target.value)}
+                />
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {teams.data && teams.data.length > 0 && (
-                  <select
-                    className="input py-1.5 text-xs"
-                    value={it.teamId || ""}
-                    onChange={(e) => assignTeam(it.id, e.target.value || null)}
-                    disabled={it.teamId ? !adminTeamIds.has(it.teamId) : false}
+            ) : (
+              <div className="px-6 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {it.color && <span className="w-3.5 h-3.5 rounded-full border border-rule flex-shrink-0" style={{ background: it.color }} />}
+                  <span className="font-display text-[1.05rem] truncate">{it.name}</span>
+                  {it.context && <span className="chip !py-0 !px-1.5 text-[9px]"><FileText size={10} /></span>}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {teams.data && teams.data.length > 0 && (
+                    <select
+                      className="input py-1.5 text-xs"
+                      value={it.teamId || ""}
+                      onChange={(e) => assignTeam(it.id, e.target.value || null)}
+                      disabled={it.teamId ? !adminTeamIds.has(it.teamId) : false}
+                    >
+                      <option value="">No team</option>
+                      {teams.data
+                        .filter((t) => !it.teamId || adminTeamIds.has(t.id) || t.id === it.teamId)
+                        .map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </select>
+                  )}
+                  <button
+                    className="btn-ghost"
+                    onClick={() => { setEditingContext(it.id); setContextDraft(it.context || ""); }}
                   >
-                    <option value="">No team</option>
-                    {teams.data
-                      .filter((t) => !it.teamId || adminTeamIds.has(t.id) || t.id === it.teamId)
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                  </select>
-                )}
-                <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
-                  <Trash2 size={13} /> Remove
-                </button>
+                    <FileText size={13} /> {it.context ? "Context" : "Add context"}
+                  </button>
+                  <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
+                    <Trash2 size={13} /> Remove
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </li>
         ))}
       </ul>
