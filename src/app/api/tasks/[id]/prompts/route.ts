@@ -7,15 +7,19 @@ const include = {
   author: { select: { id: true, username: true } }
 } as const;
 
-const SYSTEM = `You are a senior software developer. Given a task description and project context, generate a concise, actionable prompt for a coding AI agent to implement it.
+const SYSTEM = `You are a senior software developer writing a request to a coding AI agent.
 
-Rules:
-- Output ONLY the prompt text, no explanations, no markdown formatting, no preamble.
-- The prompt must be in the same language as the task description.
-- Be specific about files, functions, or components that need to be created or modified.
-- Use the project context to inform technical decisions (stack, conventions, architecture).
-- Keep it under 300 words.
-- Focus on what needs to be done, not why.`;
+Output rules:
+- Output ONLY the prompt text. No explanations, no markdown headers, no preamble, no closing remarks.
+- Write in the same language as the task description.
+- Keep it under 250 words.
+- Focus on what needs to be done, not why.
+
+Anti-hallucination rules (CRITICAL):
+- ONLY reference files, components, functions, routes, or variables that are explicitly named in the Project Context or the task notes. Do NOT invent identifiers.
+- If the Project Context does not mention specific names, describe behaviour generically (e.g. "the project filter bar", "the list view") instead of inventing names like "ProjectFilterComponent" or "ProjectListService".
+- Do not assume a framework, language, or architecture unless the Project Context states it. When unsure, stay framework-agnostic.
+- Do not prescribe implementation details (state shape, event names, prop signatures) unless they are present in the Project Context.`;
 
 function buildPrompt(task: {
   title: string; notes: string | null;

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { AlertCircle, Archive, ArchiveRestore, Copy, Check, Save, Sparkles, Trash2, X } from "lucide-react";
+import { AlertCircle, Archive, ArchiveRestore, Copy, Check, FileText, Save, Sparkles, Trash2, X } from "lucide-react";
 import type { Category, Priority, Project, Status, Task, User } from "@/types";
 
 type Opts = {
@@ -48,6 +48,12 @@ export function TaskDetailModal({
   const [generating, setGenerating] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [contextDraft, setContextDraft] = useState("");
+  const [contextLoading, setContextLoading] = useState(false);
+  const [contextSaving, setContextSaving] = useState(false);
+  const [contextError, setContextError] = useState<string | null>(null);
+  const [contextHasValue, setContextHasValue] = useState(false);
 
   useEffect(() => {
     if (!task) {
@@ -169,12 +175,49 @@ export function TaskDetailModal({
 
   const copyPrompt = async () => {
     if (!prompt) return;
+    const wrapped = `Please implement the following task in this codebase. Follow the existing conventions and only touch the files needed.\n\n---\n\n${prompt}`;
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(wrapped);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // silently fail
+    }
+  };
+
+  const openContext = async () => {
+    setContextOpen(true);
+    setContextError(null);
+    setContextLoading(true);
+    try {
+      const r = await fetch(`/api/projects/${form.projectId}`);
+      if (!r.ok) throw new Error("Could not load project context");
+      const d = await r.json();
+      setContextDraft(d.context || "");
+      setContextHasValue(!!d.context);
+    } catch (e) {
+      setContextError(e instanceof Error ? e.message : "Could not load project context");
+    } finally {
+      setContextLoading(false);
+    }
+  };
+
+  const saveContext = async () => {
+    setContextSaving(true);
+    setContextError(null);
+    try {
+      const r = await fetch(`/api/projects/${form.projectId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ context: contextDraft.trim() || null })
+      });
+      if (!r.ok) throw new Error("Could not save project context");
+      setContextHasValue(!!contextDraft.trim());
+      setContextOpen(false);
+    } catch (e) {
+      setContextError(e instanceof Error ? e.message : "Could not save project context");
+    } finally {
+      setContextSaving(false);
     }
   };
 
@@ -269,12 +312,21 @@ export function TaskDetailModal({
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[11px] text-ash tracking-wide">Suggested Prompt</span>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={openContext}
+                    title="Edit project context used by the prompt generator"
+                  >
+                    <FileText size={13} />
+                    {contextHasValue ? "Edit context" : "Add context"}
+                  </button>
                   {prompt && (
                     <button
                       type="button"
                       className="btn-ghost"
                       onClick={copyPrompt}
-                      title="Copy to clipboard"
+                      title="Copy to clipboard (wrapped with an imperative request)"
                     >
                       {copied ? <Check size={13} /> : <Copy size={13} />}
                       {copied ? "Copied" : "Copy"}
@@ -291,6 +343,48 @@ export function TaskDetailModal({
                   </button>
                 </div>
               </div>
+              {contextOpen && (
+                <div className="mb-2 border border-rule rounded-md bg-cream/40 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] text-ash tracking-wide">
+                      Context for {task.project.name} — used by Generate to avoid hallucinated file/component names
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => setContextOpen(false)}
+                        disabled={contextSaving}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  </div>
+                  {contextLoading ? (
+                    <p className="text-xs text-ash">Loading…</p>
+                  ) : (
+                    <>
+                      <textarea
+                        className="input min-h-[140px] !text-[13px]"
+                        placeholder={"## Stack\nNext.js 14, Prisma, Tailwind\n\n## Key files / components\nsrc/components/TaskDetailModal.tsx — task editor\nsrc/components/ProjectFilters.tsx — project filter bar\n\n## Conventions\n- RSC by default, 'use client' when needed"}
+                        value={contextDraft}
+                        onChange={(e) => setContextDraft(e.target.value)}
+                      />
+                      <div className="flex items-center justify-end gap-2 mt-2">
+                        {contextError && <span className="text-[11px] text-vermilion">{contextError}</span>}
+                        <button
+                          type="button"
+                          className="btn-accent !py-1 !px-3 text-xs"
+                          onClick={saveContext}
+                          disabled={contextSaving}
+                        >
+                          <Save size={13} /> {contextSaving ? "Saving…" : "Save context"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
               <textarea
                 className="input min-h-[100px] !text-[14px]"
                 placeholder="Click Generate to create an AI prompt for this task…"
