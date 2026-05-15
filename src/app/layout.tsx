@@ -1,25 +1,26 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const display = Space_Grotesk({
+const display = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap"
 });
 
-const sans = Inter({
+const sans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap"
 });
 
-const mono = JetBrains_Mono({
+const mono = Fira_Code({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-mono",
   display: "swap"
 });

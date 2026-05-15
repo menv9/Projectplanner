@@ -196,10 +196,10 @@ function Home() {
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
-          <div className="min-w-0 flex flex-col gap-1">
+          <div className="min-w-0 flex flex-col gap-0.5">
             <span className="eyebrow text-ash">Atelier · Project Planner</span>
-            <h1 className="font-sans text-[1.4rem] sm:text-[1.7rem] font-medium leading-[1.1] tracking-tight text-ink truncate">
-              {activeProject?.name || "All projects"}
+            <h1 className="font-display text-[1.7rem] sm:text-[2.1rem] font-light leading-[1.05] tracking-tight text-ink truncate">
+              <span className="display-italic">{activeProject?.name || "All projects"}</span>
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

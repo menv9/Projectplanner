@@ -210,14 +210,14 @@ function TaskCardInner({ task, statuses, onClick, onUpdated, onOptimisticPatch, 
       {interactive ? (
         <button
           onClick={onClick}
-          className="paper-card text-left p-5 pl-6 w-full transition hover:-translate-y-0.5 hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)] focus:outline-none focus:ring-2 focus:ring-black/10"
+          className="paper-card text-left p-5 pl-6 w-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.22)] dark:hover:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7)] focus:outline-none focus:ring-2 focus:ring-vermilion/20"
         >
           {body}
         </button>
       ) : (
         <div
           onClick={onClick}
-          className="paper-card text-left p-5 pl-6 w-full hover:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.18)]"
+          className="paper-card text-left p-5 pl-6 w-full transition-all duration-200 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.22)] dark:hover:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7)]"
           role="button"
           tabIndex={0}
         >
@@ -244,7 +244,7 @@ function TaskRowInner({ task, statuses, onClick, onUpdated, onOptimisticPatch, o
       {task.attention && <AttentionBadge note={task.attentionNote} />}
       <button
         onClick={onClick}
-        className="paper-card text-left px-3 py-2 pl-5 w-full transition hover:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.16)] focus:outline-none focus:ring-2 focus:ring-black/10"
+        className="paper-card text-left px-3 py-2 pl-5 w-full transition-all duration-200 hover:-translate-y-px hover:shadow-[0_6px_20px_-8px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_6px_24px_-8px_rgba(0,0,0,0.65)] focus:outline-none focus:ring-2 focus:ring-vermilion/20"
       >
         <div className="relative z-[1] grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] gap-2 md:items-center">
           <div className="min-w-0">
