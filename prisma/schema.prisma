@@ -18,6 +18,7 @@ model User {
   statuses      Status[]
   categories    Category[]
   notifications Notification[]
+  mutedProjects MutedProject[]
 }
 
 model Team {
@@ -42,17 +43,30 @@ model TeamMember {
 }
 
 model Project {
-  id      String  @id @default(cuid())
-  name    String
-  color   String?
-  context String? @db.Text
-  teamId  String?
-  team    Team?   @relation(fields: [teamId], references: [id])
-  ownerId String?
-  tasks   Task[]
+  id            String         @id @default(cuid())
+  name          String
+  color         String?
+  context       String?        @db.Text
+  teamId        String?
+  team          Team?          @relation(fields: [teamId], references: [id])
+  ownerId       String?
+  tasks         Task[]
+  mutedBy       MutedProject[]
 
   @@unique([name, ownerId])
   @@index([ownerId])
+}
+
+model MutedProject {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+  @@index([userId])
 }
 
 model Priority {

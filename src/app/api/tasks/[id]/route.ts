@@ -130,14 +130,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     if (notifyUserIds.length > 0) {
-      await prisma.notification.createMany({
-        data: notifyUserIds.map((userId) => ({
-          userId,
-          taskId: t.id,
-          message,
-          type: "TASK_ATTENTION"
-        }))
+      const muted = await prisma.mutedProject.findMany({
+        where: { projectId: prev.projectId, userId: { in: notifyUserIds } },
+        select: { userId: true }
       });
+      const mutedUserIds = new Set(muted.map((m) => m.userId));
+      const filteredIds = notifyUserIds.filter((id) => !mutedUserIds.has(id));
+
+      if (filteredIds.length > 0) {
+        await prisma.notification.createMany({
+          data: filteredIds.map((userId) => ({
+            userId,
+            taskId: t.id,
+            message,
+            type: "TASK_ATTENTION"
+          }))
+        });
+      }
     }
   }
 
@@ -165,14 +174,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     if (notifyUserIds.length > 0) {
-      await prisma.notification.createMany({
-        data: notifyUserIds.map((userId) => ({
-          userId,
-          taskId: t.id,
-          message,
-          type: "TASK_DONE"
-        }))
+      const muted = await prisma.mutedProject.findMany({
+        where: { projectId: prev.projectId, userId: { in: notifyUserIds } },
+        select: { userId: true }
       });
+      const mutedUserIds = new Set(muted.map((m) => m.userId));
+      const filteredIds = notifyUserIds.filter((id) => !mutedUserIds.has(id));
+
+      if (filteredIds.length > 0) {
+        await prisma.notification.createMany({
+          data: filteredIds.map((userId) => ({
+            userId,
+            taskId: t.id,
+            message,
+            type: "TASK_DONE"
+          }))
+        });
+      }
     }
   }
 

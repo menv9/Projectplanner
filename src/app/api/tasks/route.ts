@@ -182,14 +182,23 @@ export async function POST(req: NextRequest) {
   }
 
   if (notifyUserIds.length > 0) {
-    await prisma.notification.createMany({
-      data: notifyUserIds.map((userId) => ({
-        userId,
-        taskId: task.id,
-        message: `Nueva tarea '${task.title}' añadida`,
-        type: "TASK_CREATED"
-      }))
+    const muted = await prisma.mutedProject.findMany({
+      where: { projectId: data.projectId, userId: { in: notifyUserIds } },
+      select: { userId: true }
     });
+    const mutedUserIds = new Set(muted.map((m) => m.userId));
+    const filteredIds = notifyUserIds.filter((id) => !mutedUserIds.has(id));
+
+    if (filteredIds.length > 0) {
+      await prisma.notification.createMany({
+        data: filteredIds.map((userId) => ({
+          userId,
+          taskId: task.id,
+          message: `Nueva tarea '${task.title}' añadida`,
+          type: "TASK_CREATED"
+        }))
+      });
+    }
   }
 
   return json(task, { status: 201 });

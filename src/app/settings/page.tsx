@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Copy, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
 import type { Category, Priority, Project, Status, Team, User } from "@/types";
 import { CONTEXT_BOOTSTRAP_PROMPT } from "@/lib/contextPrompt";
 
@@ -75,6 +75,7 @@ function ProjectsSection() {
   const qc = useQueryClient();
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
   const teams = useQuery({ queryKey: ["teams"], queryFn: () => fetchJson<Team[]>("/api/teams") });
+  const mutedIds = useQuery({ queryKey: ["mutedProjects"], queryFn: () => fetchJson<string[]>("/api/projects/muted") });
   const [draft, setDraft] = useState({ name: "", color: "" });
   const [error, setError] = useState<string | null>(null);
   const [editingContext, setEditingContext] = useState<string | null>(null);
@@ -135,6 +136,12 @@ function ProjectsSection() {
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
+  const toggleMute = async (projectId: string, currentlyMuted: boolean) => {
+    await fetch(`/api/projects/${projectId}/mute`, { method: currentlyMuted ? "DELETE" : "POST" });
+    qc.invalidateQueries({ queryKey: ["mutedProjects"] });
+  };
+
+  const mutedSet = new Set(mutedIds.data || []);
   const adminTeamIds = new Set(teams.data?.filter((t) => t.role === "admin").map((t) => t.id) || []);
 
   return (
@@ -225,6 +232,14 @@ function ProjectsSection() {
                     onClick={() => { setEditingContext(it.id); setContextDraft(it.context || ""); }}
                   >
                     <FileText size={13} /> {it.context ? "Context" : "Add context"}
+                  </button>
+                  <button
+                    className={`btn-ghost ${mutedSet.has(it.id) ? "text-ash" : ""}`}
+                    onClick={() => toggleMute(it.id, mutedSet.has(it.id))}
+                    title={mutedSet.has(it.id) ? "Unmute notifications" : "Mute notifications"}
+                  >
+                    {mutedSet.has(it.id) ? <BellOff size={13} /> : <Bell size={13} />}
+                    {mutedSet.has(it.id) ? "Muted" : "Mute"}
                   </button>
                   <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
                     <Trash2 size={13} /> Remove
