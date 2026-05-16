@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Bell, BellOff, Copy, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Copy, FileText, Pencil, Trash2, X, Users, Plus, UserPlus, UserX, Check, Eye, EyeOff } from "lucide-react";
 import type { Category, Priority, Project, Status, Team, User } from "@/types";
 import { CONTEXT_BOOTSTRAP_PROMPT } from "@/lib/contextPrompt";
 
@@ -82,6 +82,9 @@ function ProjectsSection() {
   const [contextDraft, setContextDraft] = useState("");
   const [contextSaving, setContextSaving] = useState(false);
   const [contextPromptCopied, setContextPromptCopied] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("hiddenProjects") || "[]"); } catch { return []; }
+  });
 
   const copyContextPrompt = async () => {
     try {
@@ -141,7 +144,16 @@ function ProjectsSection() {
     qc.invalidateQueries({ queryKey: ["mutedProjects"] });
   };
 
+  const toggleHidden = (projectId: string) => {
+    setHiddenIds((prev) => {
+      const next = prev.includes(projectId) ? prev.filter((id) => id !== projectId) : [...prev, projectId];
+      localStorage.setItem("hiddenProjects", JSON.stringify(next));
+      return next;
+    });
+  };
+
   const mutedSet = new Set(mutedIds.data || []);
+  const hiddenSet = new Set(hiddenIds);
   const adminTeamIds = new Set(teams.data?.filter((t) => t.role === "admin").map((t) => t.id) || []);
 
   return (
@@ -240,6 +252,14 @@ function ProjectsSection() {
                   >
                     {mutedSet.has(it.id) ? <BellOff size={13} /> : <Bell size={13} />}
                     {mutedSet.has(it.id) ? "Muted" : "Mute"}
+                  </button>
+                  <button
+                    className={`btn-ghost ${hiddenSet.has(it.id) ? "text-ash" : ""}`}
+                    onClick={() => toggleHidden(it.id)}
+                    title={hiddenSet.has(it.id) ? "Show on dashboard" : "Hide from dashboard"}
+                  >
+                    {hiddenSet.has(it.id) ? <EyeOff size={13} /> : <Eye size={13} />}
+                    {hiddenSet.has(it.id) ? "Hidden" : "Hide"}
                   </button>
                   <button className="btn-ghost text-vermilion" onClick={() => del(it.id)}>
                     <Trash2 size={13} /> Remove

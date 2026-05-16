@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Grid3X3, List, Columns3, Filter, Settings as SettingsIcon, LogOut, Trash2, RotateCcw, XCircle, Plus, X, Archive, ArchiveRestore, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,7 +12,6 @@ import { FilterBar } from "@/components/FilterBar";
 import { TaskCard, TaskRow } from "@/components/TaskCard";
 import { NewTaskPanel } from "@/components/NewTaskPanel";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
-import { ProjectTabs } from "@/components/ProjectTabs";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { TaskFilterView } from "@/components/TaskFilterView";
 
@@ -44,6 +43,14 @@ function Home() {
   const [attentionCollapsed, setAttentionCollapsed] = useState(false);
   const [doneCollapsed, setDoneCollapsed] = useState(true);
   const [composeCollapsed, setComposeCollapsed] = useState(false);
+  const [addingProject, setAddingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [projectBusy, setProjectBusy] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("hiddenProjects") || "[]"); } catch { return []; }
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("composeCollapsed");
@@ -53,6 +60,14 @@ function Home() {
   useEffect(() => {
     localStorage.setItem("composeCollapsed", String(composeCollapsed));
   }, [composeCollapsed]);
+
+  useEffect(() => {
+    const onStorage = () => {
+      try { setHiddenIds(JSON.parse(localStorage.getItem("hiddenProjects") || "[]")); } catch { setHiddenIds([]); }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const me = useQuery({ queryKey: ["me"], queryFn: () => fetchJson<User>("/api/auth/me") });
   const projects = useQuery({ queryKey: ["projects"], queryFn: () => fetchJson<Project[]>("/api/projects") });
@@ -71,11 +86,8 @@ function Home() {
   });
 
   useEffect(() => {
-    if (!activeProjectId && projects.data && projects.data.length > 0) {
-      setActiveProjectId(projects.data[0].id);
-    }
     if (activeProjectId && projects.data && !projects.data.find((p) => p.id === activeProjectId)) {
-      setActiveProjectId(projects.data[0]?.id || null);
+      setActiveProjectId(null);
     }
   }, [projects.data, activeProjectId]);
 
@@ -140,6 +152,9 @@ function Home() {
   const ready = !!(me.data && opts.projects.length && opts.priorities.length && opts.statuses.length);
   const activeProject = opts.projects.find((p) => p.id === activeProjectId) || null;
 
+  const visibleProjects = showHidden ? opts.projects : opts.projects.filter((p) => !hiddenIds.includes(p.id));
+  const hiddenProjects = opts.projects.filter((p) => hiddenIds.includes(p.id));
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     localStorage.removeItem("erisTheme");
@@ -192,6 +207,22 @@ function Home() {
     qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
   }, [qc]);
 
+  const createProject = async () => {
+    if (!newProjectName.trim()) return;
+    setProjectBusy(true); setProjectError(null);
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: newProjectName.trim() })
+    });
+    setProjectBusy(false);
+    if (!res.ok) { setProjectError((await res.json()).error || "Failed"); return; }
+    const p: Project = await res.json();
+    setNewProjectName(""); setAddingProject(false);
+    qc.invalidateQueries({ queryKey: ["projects"] });
+    setActiveProjectId(p.id);
+  };
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-rule bg-paper/60 backdrop-blur-sm sticky top-0 z-30">
@@ -199,10 +230,15 @@ function Home() {
           <div className="min-w-0 flex flex-col gap-0.5">
             <span className="eyebrow text-ash">Atelier · Project Planner</span>
             <h1 className="font-display text-[1.7rem] sm:text-[2.1rem] font-light leading-[1.05] tracking-tight text-ink truncate">
-              <span className="display-italic">{activeProject?.name || "All projects"}</span>
+              <span className="display-italic">{activeProject?.name || "Projects"}</span>
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            {activeProjectId && (
+              <button className="btn" onClick={() => setActiveProjectId(null)} title="Back to projects">
+                <ArrowLeft size={14} /> <span className="hidden sm:inline text-xs">Projects</span>
+              </button>
+            )}
             <button className={viewingArchive ? "btn-primary" : "btn"} onClick={() => { setViewingArchive(!viewingArchive); setViewingTrash(false); }} title="Archive">
               <Archive size={14} />
               <span className="hidden sm:inline text-xs">{archivedTasks.data?.length ?? 0}</span>
@@ -219,13 +255,7 @@ function Home() {
             <button className="btn-ghost" onClick={logout} title="Log out"><LogOut size={14} /></button>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <ProjectTabs
-            projects={opts.projects}
-            activeId={activeProjectId}
-            onSelect={setActiveProjectId}
-          />
-        </div>
+
       </header>
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6 lg:gap-10">
@@ -450,14 +480,101 @@ function Home() {
                   </div>
                   </div>
                 </div>
-              ) : (
+              ) : opts.projects.length === 0 ? (
                 <div className="paper-card p-8 sm:p-12 text-center">
                   <div className="relative z-[1]">
                     <span className="eyebrow">Empty workshop</span>
                     <h2 className="font-display text-[1.4rem] sm:text-[1.8rem] mt-2">
                       <span className="display-italic">Begin</span> by creating a project.
                     </h2>
-                    <p className="text-sm text-ash mt-2">Use the <em>+ New</em> tab above to add the first one.</p>
+                    <p className="text-sm text-ash mt-2">Click <em>+ New project</em> below to add the first one.</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {!activeProject && opts.projects.length > 0 && (
+                <div className="space-y-6">
+                  <div className="flex items-end justify-between gap-4 flex-wrap">
+                    <div>
+                      <div className="eyebrow mb-1">Dashboard</div>
+                      <h2 className="font-display text-[1.8rem] sm:text-[2.6rem] leading-[0.95] tracking-tightish">
+                        {visibleProjects.length} project{visibleProjects.length !== 1 ? "s" : ""}
+                        {hiddenProjects.length > 0 && (
+                          <span className="text-ash text-[1rem] sm:text-[1.2rem] ml-2 font-light">
+                            ({hiddenProjects.length} hidden)
+                          </span>
+                        )}
+                      </h2>
+                    </div>
+                    {hiddenProjects.length > 0 && (
+                      <button
+                        className="btn-ghost text-xs"
+                        onClick={() => setShowHidden((v) => !v)}
+                      >
+                        {showHidden ? "Hide hidden" : "Show hidden"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {visibleProjects.map((p, i) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setActiveProjectId(p.id)}
+                        className={`paper-card text-left p-5 sm:p-6 w-full transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(var(--shadow-rgb),0.15)] ${hiddenIds.includes(p.id) ? "opacity-60" : ""}`}
+                        style={{ animationDelay: `${Math.min(i * 60, 300)}ms` }}
+                      >
+                        <div className="relative z-[1]">
+                          <div className="flex items-center gap-2 mb-3">
+                            {p.color && <span className="dot w-2.5 h-2.5" style={{ background: p.color }} />}
+                            <span className="numeral text-[10px] text-dust">{String(i + 1).padStart(2, "0")}</span>
+                          </div>
+                          <h3 className="font-display text-[1.25rem] sm:text-[1.4rem] leading-snug tracking-tightish text-ink">
+                            <span className="display-italic">{p.name}</span>
+                          </h3>
+                          {p.context && (
+                            <p className="text-sm text-ash mt-1.5 line-clamp-2">{p.context}</p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+
+                    {addingProject ? (
+                      <div className="paper-card p-5 sm:p-6">
+                        <div className="relative z-[1] space-y-3">
+                          <div className="eyebrow">New project</div>
+                          <input
+                            autoFocus
+                            className="input !py-1.5 !px-2.5 text-sm"
+                            placeholder="Project name"
+                            value={newProjectName}
+                            onChange={(e) => setNewProjectName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") createProject();
+                              if (e.key === "Escape") { setAddingProject(false); setNewProjectName(""); setProjectError(null); }
+                            }}
+                          />
+                          <div className="flex items-center gap-2">
+                            <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={createProject} disabled={projectBusy}>Create</button>
+                            <button className="btn-ghost" onClick={() => { setAddingProject(false); setNewProjectName(""); setProjectError(null); }}>
+                              <X size={14} />
+                            </button>
+                          </div>
+                          {projectError && <span className="text-xs text-vermilion">{projectError}</span>}
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAddingProject(true)}
+                        className="paper-card p-5 sm:p-6 w-full text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-8px_rgba(var(--shadow-rgb),0.15)] border-dashed"
+                        style={{ borderStyle: "dashed" }}
+                      >
+                        <div className="relative z-[1]">
+                          <Plus size={20} className="mx-auto text-dust mb-2" />
+                          <span className="eyebrow">New project</span>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
