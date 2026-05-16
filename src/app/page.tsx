@@ -175,34 +175,71 @@ function Home() {
   }, [qc]);
 
   const handleTaskMove = useCallback(async (taskId: string, newStatusId: string) => {
-    const r = await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ statusId: newStatusId })
+    const newStatus = opts.statuses.find((s) => s.id === newStatusId);
+    const previous = qc.getQueriesData<Task[]>({ queryKey: ["tasks"] });
+    qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+      if (!old) return old;
+      return old.map((t) => (t.id === taskId ? { ...t, status: newStatus || t.status } : t));
     });
-    if (!r.ok) throw new Error("Failed to move task");
+    try {
+      const r = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ statusId: newStatusId })
+      });
+      if (!r.ok) throw new Error("Failed to move task");
+    } catch (e) {
+      previous.forEach(([key, data]) => qc.setQueryData(key, data));
+      throw e;
+    }
     qc.invalidateQueries({ queryKey: ["tasks"] });
-  }, [qc]);
+  }, [qc, opts.statuses]);
 
   const handleTaskAttention = useCallback(async (taskId: string, attention: boolean, newStatusId?: string) => {
-    const body: { attention: boolean; statusId?: string } = { attention };
-    if (newStatusId) body.statusId = newStatusId;
-    const r = await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body)
+    const newStatus = newStatusId ? opts.statuses.find((s) => s.id === newStatusId) : undefined;
+    const previous = qc.getQueriesData<Task[]>({ queryKey: ["tasks"] });
+    qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => {
+      if (!old) return old;
+      return old.map((t) => {
+        if (t.id !== taskId) return t;
+        const patch: Partial<Task> = { attention };
+        if (newStatus) patch.status = newStatus;
+        return { ...t, ...patch };
+      });
     });
-    if (!r.ok) throw new Error("Failed to update attention");
+    try {
+      const body: { attention: boolean; statusId?: string } = { attention };
+      if (newStatusId) body.statusId = newStatusId;
+      const r = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error("Failed to update attention");
+    } catch (e) {
+      previous.forEach(([key, data]) => qc.setQueryData(key, data));
+      throw e;
+    }
     qc.invalidateQueries({ queryKey: ["tasks"] });
-  }, [qc]);
+  }, [qc, opts.statuses]);
 
   const handleArchive = useCallback(async (taskId: string, archive: boolean) => {
-    const r = await fetch(`/api/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ archived: archive })
-    });
-    if (!r.ok) return;
+    const previousTasks = qc.getQueriesData<Task[]>({ queryKey: ["tasks"] });
+    const previousArchived = qc.getQueriesData<Task[]>({ queryKey: ["tasks", "archived"] });
+    qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => old?.filter((t) => t.id !== taskId));
+    qc.setQueriesData<Task[]>({ queryKey: ["tasks", "archived"] }, (old) => old?.filter((t) => t.id !== taskId));
+    try {
+      const r = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ archived: archive })
+      });
+      if (!r.ok) throw new Error("Failed to archive task");
+    } catch (e) {
+      previousTasks.forEach(([key, data]) => qc.setQueryData(key, data));
+      previousArchived.forEach(([key, data]) => qc.setQueryData(key, data));
+      throw e;
+    }
     qc.invalidateQueries({ queryKey: ["tasks"] });
     qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
   }, [qc]);
@@ -210,17 +247,31 @@ function Home() {
   const createProject = async () => {
     if (!newProjectName.trim()) return;
     setProjectBusy(true); setProjectError(null);
-    const res = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: newProjectName.trim() })
-    });
-    setProjectBusy(false);
-    if (!res.ok) { setProjectError((await res.json()).error || "Failed"); return; }
-    const p: Project = await res.json();
-    setNewProjectName(""); setAddingProject(false);
-    qc.invalidateQueries({ queryKey: ["projects"] });
-    setActiveProjectId(p.id);
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Project = { id: tempId, name: newProjectName.trim(), color: null, context: null };
+    const previous = qc.getQueryData<Project[]>(["projects"]);
+    qc.setQueryData<Project[]>(["projects"], (old) => [...(old || []), optimistic]);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: newProjectName.trim() })
+      });
+      if (!res.ok) {
+        const err = (await res.json()).error || "Failed";
+        setProjectError(err);
+        qc.setQueryData(["projects"], previous);
+        return;
+      }
+      const p: Project = await res.json();
+      qc.setQueryData<Project[]>(["projects"], (old) =>
+        (old || []).map((x) => (x.id === tempId ? p : x))
+      );
+      setNewProjectName(""); setAddingProject(false);
+      setActiveProjectId(p.id);
+    } finally {
+      setProjectBusy(false);
+    }
   };
 
   return (
@@ -279,7 +330,10 @@ function Home() {
                 currentUserId={me.data.id}
                 ready={ready}
                 lockedProjectId={activeProjectId}
-                onCreated={() => qc.invalidateQueries({ queryKey: ["tasks"] })}
+                onCreated={(task) => {
+                  qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => [...(old || []), task]);
+                  qc.invalidateQueries({ queryKey: ["tasks"] });
+                }}
               />
             </div>
 
@@ -344,13 +398,27 @@ function Home() {
                 <div className="space-y-2">
                   {trashTasks.data.map((t) => {
                     const restore = async () => {
-                      await fetch(`/api/trash/${t.id}/restore`, { method: "POST" });
+                      const previousTrash = qc.getQueryData<Task[]>(["trash"]);
+                      qc.setQueryData<Task[]>(["trash"], (old) => old?.filter((x) => x.id !== t.id));
+                      try {
+                        const r = await fetch(`/api/trash/${t.id}/restore`, { method: "POST" });
+                        if (!r.ok) throw new Error();
+                      } catch {
+                        qc.setQueryData(["trash"], previousTrash);
+                      }
                       qc.invalidateQueries({ queryKey: ["trash"] });
                       qc.invalidateQueries({ queryKey: ["tasks"] });
                     };
                     const destroy = async () => {
                       if (!confirm("Delete this task permanently?")) return;
-                      await fetch(`/api/trash/${t.id}`, { method: "DELETE" });
+                      const previousTrash = qc.getQueryData<Task[]>(["trash"]);
+                      qc.setQueryData<Task[]>(["trash"], (old) => old?.filter((x) => x.id !== t.id));
+                      try {
+                        const r = await fetch(`/api/trash/${t.id}`, { method: "DELETE" });
+                        if (!r.ok) throw new Error();
+                      } catch {
+                        qc.setQueryData(["trash"], previousTrash);
+                      }
                       qc.invalidateQueries({ queryKey: ["trash"] });
                       qc.invalidateQueries({ queryKey: ["tasks"] });
                     };
@@ -761,7 +829,8 @@ function Home() {
                 ready={ready}
                 lockedProjectId={activeProjectId}
                 plain
-                onCreated={() => {
+                onCreated={(task) => {
+                  qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => [...(old || []), task]);
                   qc.invalidateQueries({ queryKey: ["tasks"] });
                   setShowAddModal(false);
                 }}
@@ -777,6 +846,9 @@ function Home() {
         opts={opts}
         onOpenChange={(v) => !v && setSelected(null)}
         onDeleted={() => {
+          if (selected) {
+            qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => old?.filter((t) => t.id !== selected.id));
+          }
           qc.invalidateQueries({ queryKey: ["tasks"] });
           qc.invalidateQueries({ queryKey: ["trash"] });
         }}
@@ -790,6 +862,7 @@ function Home() {
         }}
         onArchive={(task) => {
           setSelected(null);
+          qc.setQueriesData<Task[]>({ queryKey: ["tasks"] }, (old) => old?.filter((t) => t.id !== task.id));
           qc.invalidateQueries({ queryKey: ["tasks"] });
           qc.invalidateQueries({ queryKey: ["tasks", "archived"] });
         }}

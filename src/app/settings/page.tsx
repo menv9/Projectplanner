@@ -99,48 +99,77 @@ function ProjectsSection() {
   const saveContext = async () => {
     if (!editingContext) return;
     setContextSaving(true);
+    const previous = qc.getQueryData<Project[]>(["projects"]);
+    qc.setQueryData<Project[]>(["projects"], (old) =>
+      old?.map((p) => (p.id === editingContext ? { ...p, context: contextDraft.trim() || null } : p))
+    );
     const res = await fetch(`/api/projects/${editingContext}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ context: contextDraft.trim() || null })
     });
     setContextSaving(false);
-    if (!res.ok) { alert("Failed to save context"); return; }
+    if (!res.ok) { alert("Failed to save context"); qc.setQueryData(["projects"], previous); return; }
     setEditingContext(null);
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
   const add = async () => {
     setError(null);
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Project = { id: tempId, name: draft.name, color: draft.color || null, context: null };
+    const previous = qc.getQueryData<Project[]>(["projects"]);
+    qc.setQueryData<Project[]>(["projects"], (old) => [...(old || []), optimistic]);
     const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: draft.name, color: draft.color || null })
     });
-    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { 
+      setError((await res.json()).error || "Failed"); 
+      qc.setQueryData(["projects"], previous);
+      return; 
+    }
+    const p: Project = await res.json();
+    qc.setQueryData<Project[]>(["projects"], (old) => (old || []).map((x) => (x.id === tempId ? p : x)));
     setDraft({ name: "", color: "" });
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
+    const previous = qc.getQueryData<Project[]>(["projects"]);
+    qc.setQueryData<Project[]>(["projects"], (old) => old?.filter((p) => p.id !== id));
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["projects"], previous); return; }
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
   const assignTeam = async (projectId: string, teamId: string | null) => {
+    const previous = qc.getQueryData<Project[]>(["projects"]);
+    qc.setQueryData<Project[]>(["projects"], (old) =>
+      old?.map((p) => (p.id === projectId ? { ...p, teamId: teamId || null } : p))
+    );
     const res = await fetch(`/api/projects/${projectId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ teamId })
     });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["projects"], previous); return; }
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
   const toggleMute = async (projectId: string, currentlyMuted: boolean) => {
-    await fetch(`/api/projects/${projectId}/mute`, { method: currentlyMuted ? "DELETE" : "POST" });
+    const previous = qc.getQueryData<string[]>(["mutedProjects"]);
+    qc.setQueryData<string[]>(["mutedProjects"], (old) => {
+      if (!old) return old;
+      return currentlyMuted ? old.filter((id) => id !== projectId) : [...old, projectId];
+    });
+    try {
+      await fetch(`/api/projects/${projectId}/mute`, { method: currentlyMuted ? "DELETE" : "POST" });
+    } catch {
+      qc.setQueryData(["mutedProjects"], previous);
+    }
     qc.invalidateQueries({ queryKey: ["mutedProjects"] });
   };
 
@@ -294,41 +323,57 @@ function Section<T extends { id: string; name: string; color?: string | null; ra
       if (v == null || v === "") continue;
       body[f.name] = f.type === "number" ? Number(v) : v;
     }
+    const tempId = `temp-${Date.now()}`;
+    const optimistic = { ...body, id: tempId } as T;
+    const previous = qc.getQueryData<T[]>([queryKey]);
+    qc.setQueryData<T[]>([queryKey], (old) => [...(old || []), optimistic]);
     const res = await fetch(endpoint, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { 
+      setError((await res.json()).error || "Failed"); 
+      qc.setQueryData([queryKey], previous);
+      return; 
+    }
+    const saved: T = await res.json();
+    qc.setQueryData<T[]>([queryKey], (old) => (old || []).map((x) => (x.id === tempId ? saved : x)));
     setDraft({});
     qc.invalidateQueries({ queryKey: [queryKey] });
   };
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
+    const previous = qc.getQueryData<T[]>([queryKey]);
+    qc.setQueryData<T[]>([queryKey], (old) => old?.filter((x) => x.id !== id));
     const res = await fetch(`${endpoint}/${id}`, { method: "DELETE" });
     if (res.status === 409 && queryKey === "statuses" && q.data) {
       const others = q.data.filter((x) => x.id !== id);
-      if (others.length === 0) { alert("Status is in use and there's no other status to reassign tasks to."); return; }
+      if (others.length === 0) { alert("Status is in use and there's no other status to reassign tasks to."); qc.setQueryData([queryKey], previous); return; }
       const list = others.map((o, i) => `${i + 1}. ${o.name}`).join("\n");
       const answer = window.prompt(`This status has tasks. Move them to which status?\n${list}\n\nEnter the number:`);
-      if (!answer) return;
+      if (!answer) { qc.setQueryData([queryKey], previous); return; }
       const idx = parseInt(answer, 10) - 1;
       const target = others[idx];
-      if (!target) { alert("Invalid choice"); return; }
+      if (!target) { alert("Invalid choice"); qc.setQueryData([queryKey], previous); return; }
       const res2 = await fetch(`${endpoint}/${id}?reassignTo=${target.id}`, { method: "DELETE" });
-      if (!res2.ok) { alert((await res2.json()).error || "Failed"); return; }
+      if (!res2.ok) { alert((await res2.json()).error || "Failed"); qc.setQueryData([queryKey], previous); return; }
       qc.invalidateQueries({ queryKey: [queryKey] });
       qc.invalidateQueries({ queryKey: ["tasks"] });
       return;
     }
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData([queryKey], previous); return; }
     qc.invalidateQueries({ queryKey: [queryKey] });
   };
 
   const saveContext = async () => {
     if (!editingContext) return;
+    const previous = qc.getQueryData<T[]>([queryKey]);
+    qc.setQueryData<T[]>([queryKey], (old) =>
+      old?.map((x) => (x.id === editingContext ? { ...x, context: contextDraft || null } : x))
+    );
     const res = await fetch(`${endpoint}/${editingContext}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ context: contextDraft || null })
     });
-    if (!res.ok) { alert("Failed to save context"); return; }
+    if (!res.ok) { alert("Failed to save context"); qc.setQueryData([queryKey], previous); return; }
     setEditingContext(null);
     qc.invalidateQueries({ queryKey: [queryKey] });
   };
@@ -424,27 +469,43 @@ function TeamsSection() {
 
   const add = async () => {
     setError(null);
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Team = { id: tempId, name, role: "admin", members: [], projects: [] };
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) => [...(old || []), optimistic]);
     const res = await fetch("/api/teams", {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name })
     });
-    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { setError((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
+    const saved: Team = await res.json();
+    qc.setQueryData<Team[]>(["teams"], (old) => (old || []).map((x) => (x.id === tempId ? saved : x)));
     setName("");
     qc.invalidateQueries({ queryKey: ["teams"] });
   };
 
   const del = async (id: string) => {
     if (!confirm("Delete this team? Projects will become unassigned.")) return;
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) => old?.filter((t) => t.id !== id));
     const res = await fetch(`/api/teams/${id}`, { method: "DELETE" });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
     qc.invalidateQueries({ queryKey: ["teams"] });
     qc.invalidateQueries({ queryKey: ["projects"] });
   };
 
   const addMember = async (teamId: string) => {
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) =>
+      old?.map((t) =>
+        t.id === teamId
+          ? { ...t, members: [...t.members, { id: `temp-${Date.now()}`, userId: `temp-${Date.now()}`, username: memberName, role: "member" }] }
+          : t
+      )
+    );
     const res = await fetch(`/api/teams/${teamId}/members`, {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: memberName })
     });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
     setMemberName("");
     setAddingMember(null);
     qc.invalidateQueries({ queryKey: ["teams"] });
@@ -452,29 +513,43 @@ function TeamsSection() {
 
   const removeMember = async (teamId: string, userId: string) => {
     if (!confirm("Remove this member?")) return;
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) =>
+      old?.map((t) => (t.id === teamId ? { ...t, members: t.members.filter((m) => m.userId !== userId) } : t))
+    );
     const res = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: "DELETE" });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
     qc.invalidateQueries({ queryKey: ["teams"] });
   };
 
   const changeRole = async (teamId: string, userId: string, role: "admin" | "member") => {
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) =>
+      old?.map((t) =>
+        t.id === teamId
+          ? { ...t, members: t.members.map((m) => (m.userId === userId ? { ...m, role } : m)) }
+          : t
+      )
+    );
     const res = await fetch(`/api/teams/${teamId}/members/${userId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ role })
     });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
     qc.invalidateQueries({ queryKey: ["teams"] });
   };
 
   const rename = async (teamId: string) => {
     if (!editName.trim()) return;
+    const previous = qc.getQueryData<Team[]>(["teams"]);
+    qc.setQueryData<Team[]>(["teams"], (old) => old?.map((t) => (t.id === teamId ? { ...t, name: editName.trim() } : t)));
     const res = await fetch(`/api/teams/${teamId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: editName.trim() })
     });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["teams"], previous); return; }
     setEditingTeam(null);
     setEditName("");
     qc.invalidateQueries({ queryKey: ["teams"] });
@@ -606,10 +681,16 @@ function UsersSection() {
 
   const add = async () => {
     setError(null);
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: User = { id: tempId, username };
+    const previous = qc.getQueryData<User[]>(["users"]);
+    qc.setQueryData<User[]>(["users"], (old) => [...(old || []), optimistic]);
     const res = await fetch("/api/users", {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, pin })
     });
-    if (!res.ok) { setError((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { setError((await res.json()).error || "Failed"); qc.setQueryData(["users"], previous); return; }
+    const saved: User = await res.json();
+    qc.setQueryData<User[]>(["users"], (old) => (old || []).map((x) => (x.id === tempId ? saved : x)));
     setUsername(""); setPin("");
     qc.invalidateQueries({ queryKey: ["users"] });
   };
@@ -621,8 +702,10 @@ function UsersSection() {
   };
   const del = async (id: string) => {
     if (!confirm("Delete user?")) return;
+    const previous = qc.getQueryData<User[]>(["users"]);
+    qc.setQueryData<User[]>(["users"], (old) => old?.filter((u) => u.id !== id));
     const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-    if (!res.ok) { alert((await res.json()).error || "Failed"); return; }
+    if (!res.ok) { alert((await res.json()).error || "Failed"); qc.setQueryData(["users"], previous); return; }
     qc.invalidateQueries({ queryKey: ["users"] });
   };
 

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import type { Category, Priority, Project, Status, User } from "@/types";
+import type { Category, Priority, Project, Status, Task, User } from "@/types";
 import { ArrowLeft, ArrowRight, RotateCcw, Check } from "lucide-react";
 
 type Opts = {
@@ -37,7 +37,7 @@ export function NewTaskPanel({
 }: {
   opts: Opts;
   currentUserId: string;
-  onCreated: () => void;
+  onCreated: (task: Task) => void;
   ready: boolean;
   lockedProjectId: string | null;
   className?: string;
@@ -96,7 +96,8 @@ export function NewTaskPanel({
         })
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed to create");
-      onCreated();
+      const task: Task = await res.json();
+      onCreated(task);
       reset();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1600);
