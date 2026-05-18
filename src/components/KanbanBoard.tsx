@@ -218,7 +218,7 @@ function KanbanBoardInner({
                         {collapsed ? <ChevronDown size={14} className="text-ash" /> : <ChevronUp size={14} className="text-ash" />}
                       </button>
                       {!collapsed ? (
-                        <div key="open" className="rise-in flex flex-col flex-1">
+                        <div key="open" className="flex flex-col flex-1">
                           <StatusColumn
                             status={status}
                             tasks={columnTasks}
